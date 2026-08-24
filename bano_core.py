@@ -54,6 +54,7 @@ COMANDOS_VALIDOS = [
     "diurno",
     "nocturno",
     "sauna",
+    "apagar luces",
     "encender ducha",
     "apagar ducha",
     "abrir persiana",
@@ -65,8 +66,9 @@ COMANDOS_VALIDOS = [
 
 # Modos de iluminación mutuamente excluyentes: el ESP32 apaga todas las
 # luces ambientales antes de encender cualquiera de ellos, así que solo
-# el ÚLTIMO que se envíe queda realmente activo.
-MODOS_ILUMINACION_EXCLUYENTES = {"diurno", "nocturno", "sauna"}
+# el ÚLTIMO que se envíe queda realmente activo. "apagar luces" también
+# es un estado de iluminación (el LED en negro), así que entra aquí.
+MODOS_ILUMINACION_EXCLUYENTES = {"diurno", "nocturno", "sauna", "apagar luces"}
 
 PROMPT_SISTEMA = f"""Eres un intérprete de comandos para un baño inteligente.
 Tu única tarea es leer lo que dice el usuario y devolver uno o más de
@@ -84,6 +86,8 @@ Reglas de mapeo:
   claridad -> "diurno"
 - Si pide modo noche, luz tenue, o dice que va a dormir -> "nocturno"
 - Si menciona sauna o vapor -> "sauna"
+- Si pide apagar la luz, apagar la iluminación, o quedarse a oscuras
+  (sin mencionar la ducha) -> "apagar luces"
 - Si pide prender/abrir/encender la ducha -> "encender ducha"
 - Si pide apagar/cerrar la ducha -> "apagar ducha"
 - Si pide abrir la persiana, ventana o cortina -> "abrir persiana"
@@ -93,11 +97,11 @@ Reglas de mapeo:
 - Si pregunta por el estado general del baño -> "estado"
 
 Regla importante sobre iluminación:
-"diurno", "nocturno" y "sauna" son modos de luz EXCLUYENTES entre sí
-(no pueden estar encendidos al mismo tiempo). Si el usuario pide dos
-modos de luz contradictorios en el mismo mensaje, incluye solo el
-que el usuario quiere que quede activo AL FINAL (el más reciente en
-su frase), no ambos.
+"diurno", "nocturno", "sauna" y "apagar luces" son modos de luz
+EXCLUYENTES entre sí (no pueden estar activos al mismo tiempo). Si el
+usuario pide dos modos de luz contradictorios en el mismo mensaje,
+incluye solo el que el usuario quiere que quede activo AL FINAL (el
+más reciente en su frase), no ambos.
 
 Si el mensaje no corresponde a ningún comando reconocible, responde
 exactamente: ninguno
@@ -117,7 +121,7 @@ mqtt_conectado = False
 # "Ducha ENCENDIDA", "Temp: 23.50 C | Hum: 45.00 %"). Lo usa app.py para
 # mostrar un dashboard en vez de un simple historial de texto.
 ESTADO_ACTUAL = {
-    "luz": None,          # "diurno" | "nocturno" | "sauna" | None
+    "luz": None,          # "diurno" | "nocturno" | "sauna" | "apagado" | None
     "ducha": None,        # True | False | None
     "persiana": None,     # "abierta" | "cerrada" | None
     "temperatura": None,  # float | None
@@ -134,6 +138,8 @@ def _actualizar_estado_desde_mensaje(mensaje: str):
         ESTADO_ACTUAL["luz"] = "nocturno"
     elif "modo sauna" in m:
         ESTADO_ACTUAL["luz"] = "sauna"
+    elif "luces apagadas" in m:
+        ESTADO_ACTUAL["luz"] = "apagado"
 
     if "ducha encendida" in m:
         ESTADO_ACTUAL["ducha"] = True

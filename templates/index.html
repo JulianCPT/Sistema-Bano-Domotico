@@ -351,6 +351,7 @@ const FRASES_COMANDO = {
   'diurno': 'Modo diurno activado',
   'nocturno': 'Modo nocturno activado',
   'sauna': 'Modo sauna activado',
+  'apagar luces': 'Luces apagadas',
   'encender ducha': 'Ducha encendida',
   'apagar ducha': 'Ducha apagada',
   'abrir persiana': 'Persiana abierta',
@@ -419,9 +420,16 @@ formTexto.addEventListener('submit', (e) => {
   enviarTexto(texto);
 });
 
-document.getElementById('cardDiurno').addEventListener('click', () => enviarTexto('diurno'));
-document.getElementById('cardNocturno').addEventListener('click', () => enviarTexto('nocturno'));
-document.getElementById('cardSauna').addEventListener('click', () => enviarTexto('sauna'));
+// Botones de luz: funcionan como TOGGLE. Si el modo tocado ya está
+// activo (tiene la clase "activa"), se apaga en vez de reenviarlo.
+function toggleModoLuz(cardId, modo) {
+  const yaActiva = document.getElementById(cardId).classList.contains('activa');
+  enviarTexto(yaActiva ? 'apagar luces' : modo);
+}
+
+document.getElementById('cardDiurno').addEventListener('click', () => toggleModoLuz('cardDiurno', 'diurno'));
+document.getElementById('cardNocturno').addEventListener('click', () => toggleModoLuz('cardNocturno', 'nocturno'));
+document.getElementById('cardSauna').addEventListener('click', () => toggleModoLuz('cardSauna', 'sauna'));
 
 document.getElementById('cardDucha').addEventListener('click', () => {
   const encendida = document.getElementById('badgeDucha').dataset.on === 'true';
