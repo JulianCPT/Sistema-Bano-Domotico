@@ -1,20 +1,258 @@
-# 🛁 Sistema Baño Domótico
+<div align="center">
 
-Proyecto de la Universidad Militar Nueva Granada — Ingeniería Mecatrónica.
+# 🛁 Baño Domótico Inteligente
 
-Sistema de control para un baño inteligente que permite manejar iluminación,
-ducha y persiana mediante **comandos de voz o texto en lenguaje natural**,
-usando un microcontrolador **ESP32**, el protocolo **MQTT** y un modelo de
-lenguaje (**Groq**) para interpretar lo que pide el usuario.
+### Control de iluminación, ducha y persiana por voz o texto, con IA e IoT
 
-Se puede controlar desde:
-- Una **consola de PC** (`chatbot_bano.py`)
-- El **navegador del celular**, con un dashboard táctil y botón de micrófono
-  (`app.py` + `templates/index.html`)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![ESP32](https://img.shields.io/badge/ESP32-Microcontrolador-E7352C?style=for-the-badge&logo=espressif&logoColor=white)](https://www.espressif.com/)
+[![Flask](https://img.shields.io/badge/Flask-Servidor%20Web-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![MQTT](https://img.shields.io/badge/MQTT-HiveMQ-660066?style=for-the-badge&logo=eclipsemosquitto&logoColor=white)](https://www.hivemq.com/)
+[![Groq](https://img.shields.io/badge/Groq-LLM%20%2B%20Whisper-F55036?style=for-the-badge&logo=openai&logoColor=white)](https://groq.com/)
+
+**Universidad Militar Nueva Granada** · Ingeniería Mecatrónica
+
+</div>
 
 ---
 
-## 📐 Arquitectura general
+## 📸 Vista previa
+
+<!--
+  AQUÍ VAN TUS IMÁGENES. Sube tus capturas/fotos a una carpeta llamada
+  "docs/imagenes" dentro del repo y referencia cada una así:
+
+  ![Dashboard móvil](docs/imagenes/dashboard.png)
+
+  Sugerencias de qué capturar:
+  - Captura del dashboard en el celular (modos de luz, ducha, persiana)
+  - Foto del ESP32 armado con los LEDs, el DHT11 y el servo
+  - GIF corto usando el botón de micrófono y viendo el toast de respuesta
+  - Captura de la consola (chatbot_bano.py) mostrando un comando interpretado
+-->
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/imagenes/dashboard.png" alt="Dashboard móvil" width="100%"><br>
+      <sub><b>Dashboard móvil</b> — control táctil y por voz</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/imagenes/montaje.png" alt="Montaje del ESP32" width="100%"><br>
+      <sub><b>Montaje físico</b> — ESP32, sensores y actuadores</sub>
+    </td>
+  </tr>
+</table>
+
+<div align="center">
+  <img src="docs/imagenes/demo.gif" alt="Demo funcionando" width="60%"><br>
+  <sub><b>Demo:</b> comando de voz → interpretación → acción en el ESP32</sub>
+</div>
+
+---
+
+## 📖 Descripción
+
+Sistema de control para un baño inteligente que permite manejar **iluminación, ducha y persiana** mediante **comandos de voz o texto en lenguaje natural**. Combina un microcontrolador **ESP32**, el protocolo **MQTT** y un modelo de lenguaje (**Groq**) que interpreta lo que pide el usuario y lo traduce en acciones concretas.
+
+Se puede controlar desde:
+- 🖥️ Una **consola de PC** (`chatbot_bano.py`)
+- 📱 El **navegador del celular**, con un dashboard táctil y botón de micrófono (`app.py` + `templates/index.html`)
+
+---
+
+## 📑 Tabla de contenido
+
+- [Conceptos clave](#-conceptos-clave-para-entender-el-proyecto)
+- [Arquitectura general](#-arquitectura-general)
+- [Estructura del repositorio](#-estructura-del-repositorio)
+- [Características](#-características)
+- [Requisitos](#️-requisitos)
+- [Instalación](#-instalación)
+- [Cómo correrlo](#️-cómo-correrlo)
+- [Explicación del código](#-explicación-del-código-bloque-por-bloque)
+- [Comandos disponibles](#-comandos-disponibles)
+- [Nota de seguridad](#-nota-de-seguridad)
+- [Autor](#-autor)
+
+---
+
+## 📚 Conceptos clave (para entender el proyecto)
+
+Si es la primera vez que ves términos como MQTT, broker o LLM, aquí tienes una explicación rápida de cada pieza antes de meterte al código.
+
+> **Índice de esta sección:** [MQTT](#-qué-es-mqtt) · [Broker](#-qué-es-un-broker) · [Topic](#️-qué-es-un-topic) · [LLM y Groq](#-qué-es-un-llm-y-por-qué-se-usa-groq) · [Whisper](#️-qué-es-whisper) · [HTTPS](#-qué-es-https-y-por-qué-el-certificado-no-confiable) · [Puerto 5000](#-por-qué-el-puerto-5000) · [ESP32](#-qué-es-el-esp32-y-qué-hace-aquí) · [Variables de entorno](#-qué-son-las-variables-de-entorno-y-por-qué-la-api-key-no-va-en-el-código) · [API REST y JSON](#-qué-es-una-api-rest-y-qué-es-json) · [GPIO y DHT11](#-qué-son-los-pines-gpio-y-el-sensor-dht11) · [Servomotor y ángulos](#-cómo-funciona-el-servomotor-de-la-persiana) · [Código no bloqueante](#-por-qué-no-se-usa-delay-en-el-esp32-código-no-bloqueante) · [Tecnologías del frontend](#-tecnologías-usadas-en-la-interfaz-móvil)
+
+### 🔌 ¿Qué es MQTT?
+
+**MQTT** (Message Queuing Telemetry Transport) es un protocolo de mensajería ligero pensado para dispositivos con poca memoria y conexiones inestables — por eso es el estándar de facto en proyectos de **IoT** (Internet de las Cosas) como este, donde un ESP32 con pocos recursos necesita comunicarse de forma confiable.
+
+Funciona con un modelo **publicador/suscriptor** (pub/sub), muy distinto a una petición HTTP normal:
+
+- Nadie le "pregunta" directamente al ESP32 ni el ESP32 le pregunta directamente a tu PC.
+- En cambio, ambos se conectan a un tercero llamado **broker**, y se comunican dejando y leyendo mensajes en "canales" llamados **topics**.
+
+```
+   PC (Flask / consola)                    ESP32
+         │                                    │
+         │  publica en                        │  está SUSCRITO a
+         │  "…/comando"                        │  "…/comando"
+         ▼                                    ▼
+   ┌─────────────────────────────────────────────┐
+   │            BROKER MQTT (intermediario)        │
+   │            broker.hivemq.com                  │
+   └─────────────────────────────────────────────┘
+         ▲                                    │
+         │  está SUSCRITO a                    │  publica en
+         │  "…/estado"                          │  "…/estado"
+         │                                    ▼
+   PC (recibe temperatura,               (reporta lo que
+   confirmaciones, etc.)                  acaba de hacer)
+```
+
+**¿Por qué usar esto en vez de que el celular hable directo con el ESP32?** Porque el ESP32 casi nunca tiene una IP pública ni fija, y exponerlo directo a internet sería inseguro. Con MQTT, ambos "salen" hacia el mismo broker (sin que nadie necesite recibir conexiones entrantes), lo cual es mucho más simple de configurar en una red doméstica o universitaria.
+
+### 🖧 ¿Qué es un broker?
+
+El **broker** es el servidor intermediario que recibe todos los mensajes publicados y los reparte a quien esté suscrito al topic correspondiente. En este proyecto se usa `broker.hivemq.com`, que es **público y gratuito** — cualquiera en internet puede usarlo, por eso el proyecto define un **prefijo de topic único** (`unimilitar_duchainteligente_hearvl2026`) para no mezclar sus mensajes con los de otro grupo que también esté usando ese broker.
+
+### 🏷️ ¿Qué es un topic?
+
+Un **topic** es simplemente el "nombre del canal" donde se publican y escuchan mensajes, como si fuera una emisora de radio. Este proyecto usa dos:
+
+| Topic | Quién publica | Quién escucha | Ejemplo de mensaje |
+|---|---|---|---|
+| `.../comando` | PC (Flask o consola) | ESP32 | `"encender ducha"` |
+| `.../estado` | ESP32 | PC (Flask o consola) | `"Ducha ENCENDIDA"`, `"Temp: 23.5 C \| Hum: 45.0 %"` |
+
+### 🧠 ¿Qué es un LLM y por qué se usa Groq?
+
+Un **LLM** (Large Language Model, o "modelo de lenguaje grande") es el tipo de inteligencia artificial detrás de cosas como ChatGPT: entiende texto en lenguaje natural y puede seguir instrucciones. Aquí se usa para traducir frases como *"quiero dormir"* al comando exacto que el ESP32 entiende (`nocturno`), gracias a un **prompt de sistema** que le explica las reglas de antemano.
+
+**Groq** no es el modelo en sí, sino la empresa/API que lo sirve — se eligió porque ofrece esta funcionalidad de forma gratuita y con respuestas muy rápidas, ideal para que el sistema se sienta "instantáneo" al dar una orden.
+
+### 🎙️ ¿Qué es Whisper?
+
+**Whisper** es un modelo de IA (originalmente de OpenAI) especializado en **transcripción de voz a texto**. Groq también lo ofrece como servicio. El flujo completo cuando hablas por el micrófono del celular es:
+
+```
+Tu voz (audio) → Whisper (Groq) → texto en español → LLM (Groq) → comando → MQTT → ESP32
+```
+
+### 🔒 ¿Qué es HTTPS y por qué el "certificado no confiable"?
+
+**HTTPS** es la versión segura (cifrada) de HTTP, el protocolo con el que los navegadores cargan páginas web. Los navegadores modernos **solo permiten usar el micrófono en páginas HTTPS** (o en `localhost`), por seguridad — así una página cualquiera no puede grabarte a escondidas.
+
+Como este servidor corre en tu propia red local y no tiene un certificado "oficial" firmado por una autoridad reconocida (como sí tienen los bancos o Google), el navegador genera uno **autofirmado** (`ssl_context="adhoc"`) y te muestra una advertencia de "sitio no seguro". Es esperado: es tu propio servidor, en tu propia red, así que puedes darle "continuar" sin problema.
+
+### 🔢 ¿Por qué el puerto 5000?
+
+Cuando visitas `https://<IP-de-tu-PC>:5000`, el `:5000` es el **puerto**: la "puerta" específica de tu PC por la que las peticiones llegan al programa correcto (tu PC puede tener decenas de programas escuchando en distintos puertos a la vez).
+
+- **5000 es el puerto por defecto de Flask** cuando no se especifica otro (Django, por ejemplo, usa el 8000).
+- Los puertos del 0 al 1023 (como el 80 para HTTP o el 443 para HTTPS) son **privilegiados** y suelen requerir permisos de administrador; el 5000 está en el rango libre (1024–49151), así que cualquier usuario puede levantar ahí un servidor sin fricción.
+- Es poco probable que otro programa ya esté usando ese puerto en tu PC, a diferencia del 80 o el 443.
+
+Si quisieras cambiarlo, bastaría con modificar `port=5000` en `app.py` y usar ese mismo número en la URL desde el celular.
+
+### 📟 ¿Qué es el ESP32 y qué hace aquí?
+
+El **ESP32** es un microcontrolador (una "mini computadora" de bajo costo) con **WiFi integrado**, ideal para proyectos de electrónica conectada. En este sistema es el que:
+- Recibe comandos por MQTT y mueve físicamente los LEDs y el servomotor
+- Lee el sensor de temperatura/humedad (**DHT11**)
+- Publica su estado de vuelta al broker para que el dashboard se actualice
+
+A diferencia de tu PC o celular, el ESP32 **no corre Python** — su firmware (`DuchaInteligente.ino`) está escrito en C++ y se sube con Arduino IDE.
+
+### 🔑 ¿Qué son las variables de entorno y por qué la API key no va en el código?
+
+Una **variable de entorno** es un valor que vive "fuera" del código, en el sistema operativo, y que el programa lee en tiempo de ejecución con `os.environ.get("GROQ_API_KEY")`.
+
+**¿Por qué no escribir la key directo en `bano_core.py`?** Porque ese archivo se sube a GitHub, y una API key es como una contraseña: si queda escrita en el código y el repositorio es público, cualquiera podría copiarla y usar tu cuenta de Groq (gastando tu cupo gratuito o, en un servicio de pago, generando cargos). Por eso se define aparte:
+
+```bash
+# PowerShell
+$env:GROQ_API_KEY = "tu_api_key_aqui"
+
+# CMD
+set GROQ_API_KEY=tu_api_key_aqui
+```
+
+> 💡 Si en algún momento vas a subir este proyecto a GitHub, revisa que tu `.gitignore` excluya cualquier archivo `.env` que uses para guardar claves, para no subirlas por accidente.
+
+### 🌐 ¿Qué es una API REST y qué es JSON?
+
+Una **API** (Interfaz de Programación de Aplicaciones) es simplemente un conjunto de "puertas" (rutas/endpoints) que un programa expone para que otros programas le pidan cosas. Este proyecto usa el estilo **REST**, donde cada acción es una combinación de una **ruta** (URL) y un **método HTTP**:
+
+| Método HTTP | Uso típico |
+|---|---|
+| `GET` | Pedir/leer información (ej. `/api/estado`) |
+| `POST` | Enviar/crear algo (ej. enviar un comando en `/api/comando`) |
+
+Los datos que viajan entre el navegador y Flask van en formato **JSON** (JavaScript Object Notation) — un texto estructurado en `{ "clave": "valor" }` muy fácil de leer tanto para humanos como para programas. Por ejemplo, cuando escribes un comando, el navegador envía:
+
+```json
+{ "texto": "enciende la ducha" }
+```
+
+Y Flask responde con algo como:
+
+```json
+{ "ok": true, "comandos": ["encender ducha"], "mqtt_conectado": true }
+```
+
+### 🔧 ¿Qué son los pines GPIO y el sensor DHT11?
+
+Los **pines GPIO** (General Purpose Input/Output) son las "patitas" físicas del ESP32 que se pueden programar como entrada (leer una señal, ej. un sensor) o salida (enviar una señal, ej. encender un LED). En el código se identifican por número:
+
+```cpp
+#define LED_BLANCO_1 25   // GPIO 25 controla un LED de luz diurna
+#define DHT_PIN 4         // GPIO 4 está conectado al sensor DHT11
+```
+
+El **DHT11** es un sensor económico que mide **temperatura y humedad** del ambiente y las entrega por un solo cable de datos. El ESP32 lo lee cada cierto intervalo (`leerDHT11()`) y publica el resultado por MQTT para que el dashboard lo muestre.
+
+### 🌀 ¿Cómo funciona el servomotor de la persiana?
+
+Un **servomotor** es un motor que, a diferencia de uno normal, no gira sin parar: se le indica un **ángulo específico** (entre 0° y 180°) y se posiciona ahí y se queda quieto. Es ideal para simular la apertura y cierre de una persiana con un movimiento mecánico simple, como una manivela.
+
+```cpp
+persiana.write(165);  // 165° = posición ABIERTA
+persiana.write(75);   // 75°  = posición CERRADA
+```
+
+Estos ángulos (165° y 75°) se calibran de forma manual según cómo quede montado físicamente el servo respecto a la persiana — no son un estándar, son "lo que funcionó" para este montaje en particular. Si armas el tuyo distinto, es normal tener que ajustar estos números probando.
+
+### ⏱️ ¿Por qué no se usa `delay()` en el ESP32? (código no bloqueante)
+
+En Arduino, `delay(1000)` **congela por completo** el microcontrolador durante ese tiempo — no puede hacer nada más, ni siquiera revisar si llegó un mensaje MQTT. Si el ESP32 tuviera que esperar así cada vez que revisa el WiFi o el sensor, se volvería lento e insensible a comandos.
+
+Por eso el firmware usa el patrón de **"código no bloqueante"**, comparando el tiempo transcurrido con `millis()` (el número de milisegundos desde que se encendió el ESP32) en vez de detener todo con `delay()`:
+
+```cpp
+if (millis() - ultimaLectura < INTERVALO_DHT) {
+    return;  // aún no toca leer el sensor, sigue con lo demás
+}
+```
+
+Así, en cada vuelta del `loop()` el ESP32 puede seguir atendiendo WiFi, MQTT y comandos por serial, sin quedarse "congelado" esperando el sensor o una reconexión.
+
+### 🖥️ Tecnologías usadas en la interfaz móvil
+
+El `index.html` usa varias funciones nativas del navegador (sin frameworks externos), útiles de conocer si vas a modificarlo:
+
+| Tecnología | Para qué se usa aquí |
+|---|---|
+| `fetch()` | Enviar y recibir datos JSON del servidor Flask (`async/await`) |
+| `MediaRecorder` | Grabar audio del micrófono mientras se mantiene presionado el botón |
+| `Blob` | Empaquetar el audio grabado en un archivo para enviarlo por `FormData` |
+| `SpeechSynthesisUtterance` | Hacer que el navegador **lea en voz alta** la confirmación de cada acción (Text-to-Speech) |
+| `localStorage` | Recordar si el usuario dejó activada o desactivada la voz, incluso si cierra la página |
+| `setInterval` | Refrescar el dashboard cada 5s y pedir sensores nuevos cada 20s automáticamente |
+
+---
+
+## 🏗 Arquitectura general
 
 ```
 [Usuario habla o escribe]
@@ -45,11 +283,7 @@ Se puede controlar desde:
                          LEDs, servo (persiana), sensor DHT11
 ```
 
-**Idea clave:** toda la lógica de conexión MQTT y de interpretación de
-lenguaje natural vive en un solo archivo (`bano_core.py`) para no
-duplicarla entre la versión de consola y la versión web. Tanto
-`chatbot_bano.py` como `app.py` solo se encargan de la interfaz
-(consola o navegador) y llaman a las funciones de `bano_core.py`.
+**Idea clave:** toda la lógica de conexión MQTT y de interpretación de lenguaje natural vive en un solo archivo (`bano_core.py`) para no duplicarla entre la versión de consola y la versión web. Tanto `chatbot_bano.py` como `app.py` solo se encargan de la interfaz (consola o navegador) y llaman a las funciones de `bano_core.py`.
 
 ---
 
@@ -57,12 +291,14 @@ duplicarla entre la versión de consola y la versión web. Tanto
 
 ```
 Sistema-Bano-Domotico/
-├── app.py                  # Servidor Flask (control desde el celular)
-├── bano_core.py             # Lógica compartida: MQTT, Groq, Whisper
-├── chatbot_bano.py          # Chatbot de consola
-├── DuchaInteligente.ino      # Firmware del ESP32
+├── app.py                     # Servidor Flask (control desde el celular)
+├── bano_core.py                # Lógica compartida: MQTT, Groq, Whisper
+├── chatbot_bano.py              # Chatbot de consola
+├── DuchaInteligente.ino          # Firmware del ESP32
 ├── templates/
-│   └── index.html            # Interfaz móvil (HTML+CSS+JS)
+│   └── index.html                # Interfaz móvil (HTML+CSS+JS)
+├── docs/
+│   └── imagenes/                  # Capturas, fotos y GIFs para este README
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -70,23 +306,39 @@ Sistema-Bano-Domotico/
 
 ---
 
+## ✨ Características
+
+| | |
+|---|---|
+| 🗣️ **Comandos por voz** | Habla en español natural ("enciende la ducha y abre la persiana") |
+| ⌨️ **Comandos por texto** | Desde consola o desde el campo de texto del celular |
+| 💡 **3 modos de luz** | Diurno, nocturno y sauna — mutuamente excluyentes |
+| 🚿 **Control de ducha** | Encender / apagar remotamente |
+| 🪟 **Persiana motorizada** | Abrir / cerrar con servomotor |
+| 🌡️ **Sensores en vivo** | Temperatura y humedad (DHT11) en el dashboard |
+| 🔊 **Respuesta por voz** | El navegador confirma en voz alta cada acción (Text-to-Speech) |
+| 📶 **Reconexión automática** | WiFi y MQTT se reconectan solos sin bloquear el sistema |
+
+---
+
 ## ⚙️ Requisitos
 
 - Python 3.10+
-- Una cuenta en [Groq](https://console.groq.com/) para obtener una API key
-  gratuita (se usa para interpretar comandos y transcribir voz)
+- Una cuenta en [Groq](https://console.groq.com/) para obtener una API key gratuita (se usa para interpretar comandos y transcribir voz)
 - Un ESP32 con los componentes: LEDs, sensor DHT11, micro-servo
-- Arduino IDE (o PlatformIO) con las librerías: `DHT sensor library`,
-  `ESP32Servo`, `PubSubClient`
+- Arduino IDE (o PlatformIO) con las librerías: `DHT sensor library`, `ESP32Servo`, `PubSubClient`
 
-Instalación de dependencias de Python:
+---
+
+## 📥 Instalación
 
 ```bash
+git clone https://github.com/tu-usuario/Sistema-Bano-Domotico.git
+cd Sistema-Bano-Domotico
 pip install -r requirements.txt
 ```
 
-Definir la API key de Groq como variable de entorno antes de correr
-cualquiera de los dos programas:
+Define tu API key de Groq como variable de entorno antes de correr cualquiera de los dos programas:
 
 ```bash
 # PowerShell
@@ -109,593 +361,104 @@ python chatbot_bano.py
 ```bash
 python app.py
 ```
-Te dará una URL tipo `https://<IP-de-tu-PC>:5000` para abrir desde el
-navegador del celular. El certificado será autofirmado (aparece una
-advertencia, es normal — es tu propio servidor).
+Te dará una URL tipo `https://<IP-de-tu-PC>:5000` para abrir desde el navegador del celular. El certificado será autofirmado (aparece una advertencia, es normal — es tu propio servidor).
 
 ---
 
-## 📦 Dependencias: qué es cada una y en qué archivo se usa
-
-Esta sección explica, librería por librería, para qué sirve y en qué
-parte exacta del proyecto se usa. Se separan las que van en
-`requirements.txt` (se instalan con `pip`) de las que ya vienen incluidas
-con Python o son propias de Arduino/el navegador.
-
-### Instalables con `pip` (están en `requirements.txt`)
-
-| Librería | Se usa en | Para qué exactamente |
-|---|---|---|
-| **`flask`** | `app.py` | Framework del servidor web. Provee `Flask(__name__)` para crear la app, `render_template()` para servir `index.html`, `request` para leer lo que envía el celular (texto o audio), `jsonify()` para responder en formato JSON, y el decorador `@app.route()` para definir cada URL (`/api/comando`, `/api/estado`, etc.) |
-| **`pyopenssl`** | `app.py` | No se importa con `import`, pero es requerida por Flask internamente cuando se le pide `ssl_context="adhoc"` en `app.run(...)`. Esa opción genera un certificado HTTPS autofirmado al vuelo; sin `pyOpenSSL` instalado, esa línea falla. Es necesaria porque los navegadores solo dan acceso al micrófono en páginas seguras (HTTPS) |
-| **`paho-mqtt`** | `bano_core.py` | Implementa el protocolo MQTT en Python (se importa como `paho.mqtt.client`). Se usa para crear el cliente (`mqtt.Client(...)`), conectarse al broker (`connect_async`), suscribirse al topic de estado (`subscribe`), publicar comandos al ESP32 (`publish`), y manejar reconexión automática (`loop_start`, `reconnect_delay_set`) |
-| **`requests`** | `bano_core.py` | Cliente HTTP para hablar con la API de Groq. Se usa en `interpretar_mensaje()` (para mandar el texto del usuario al modelo de lenguaje) y en `transcribir_audio()` (para mandar el archivo de audio al modelo de transcripción Whisper) |
-
-### Incluidas con Python (NO van en `requirements.txt`)
-
-| Librería | Se usa en | Para qué |
-|---|---|---|
-| `os` | `bano_core.py` | Leer la variable de entorno `GROQ_API_KEY` con `os.environ.get(...)` |
-| `re` | `bano_core.py` | Expresiones regulares para extraer temperatura y humedad de los mensajes de texto que manda el ESP32 (ej. `"Temp: 23.50 C"`) |
-| `time` | `bano_core.py` | Pausas (`time.sleep(...)`) entre reintentos de conexión y entre el envío de comandos múltiples |
-| `logging` | `app.py` | Apagar los logs automáticos de Flask/Werkzeug (una línea por cada petición HTTP), dejando solo los mensajes de error reales |
-| `socket` | `app.py` | Truco para detectar la IP local del PC en la red (`obtener_ip_local()`), abriendo un socket UDP hacia una IP externa solo para que el sistema operativo elija la interfaz de red correcta |
-
-### `chatbot_bano.py`
-
-No usa ninguna librería externa nueva. Solo importa el propio módulo del
-proyecto:
-```python
-import bano_core as core
-```
-Todo lo demás que usa (`input()`, `print()`) son funciones nativas del
-lenguaje, no requieren instalación.
-
-### `templates/index.html`
-
-No usa `pip install` de nada — es JavaScript que corre **en el navegador
-del celular**, no en el servidor de Python. Usa únicamente APIs nativas
-del navegador:
-- **`fetch()`** — para llamar a las rutas de Flask (`/api/comando`, `/api/estado`, etc.)
-- **`MediaRecorder`** — para grabar audio del micrófono
-- **`SpeechSynthesisUtterance` / `speechSynthesis`** — para leer en voz alta las confirmaciones (texto a voz)
-- **`localStorage`** — para recordar si el usuario dejó activada o no la respuesta por voz
-
-### `DuchaInteligente.ino`
-
-No usa `pip`, usa librerías de Arduino/ESP32 que se instalan desde el
-Arduino IDE (Herramientas → Administrar Bibliotecas), **no** con
-`requirements.txt`:
-
-| Librería | Para qué |
-|---|---|
-| `Arduino.h` | Funciones base del framework Arduino (`digitalWrite`, `delay`, etc.) |
-| `DHT.h` | Leer el sensor de temperatura/humedad DHT11 |
-| `ESP32Servo.h` | Controlar el servomotor de la persiana |
-| `WiFi.h` | Conectar el ESP32 a la red WiFi |
-| `PubSubClient.h` | Cliente MQTT para el ESP32 (equivalente en C++ a `paho-mqtt` en Python) |
-
----
-
-## 🧩 Explicación del código, función por función
+## 🧩 Explicación del código, bloque por bloque
 
 ### 1. `bano_core.py` — el cerebro compartido
 
-#### Configuración MQTT
+**Configuración MQTT**
 ```python
 BROKER = "broker.hivemq.com"
-PUERTO = 1883
 TOPIC_PREFIJO = "unimilitar_duchainteligente_hearvl2026"
-TOPIC_COMANDO = f"{TOPIC_PREFIJO}/comando"
-TOPIC_ESTADO = f"{TOPIC_PREFIJO}/estado"
 ```
-Se usa un broker MQTT **público**, así que se define un prefijo único de
-topic para no chocar con otros proyectos que usen el mismo broker. Este
-mismo prefijo debe coincidir exactamente con el que está en el `.ino`.
-`TOPIC_COMANDO` es el canal por donde Python le manda órdenes al ESP32;
-`TOPIC_ESTADO` es el canal por donde el ESP32 reporta lo que va pasando
-(qué luz está encendida, la temperatura, etc.).
+Se usa un broker MQTT **público**, así que se define un prefijo único de topic para no chocar con otros proyectos que usen el mismo broker. Este mismo prefijo debe coincidir exactamente con el que está en el `.ino`.
 
-#### Configuración de Groq y el prompt del sistema
-```python
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODELO = "openai/gpt-oss-120b"
-GROQ_TRANSCRIPCION_URL = "https://api.groq.com/openai/v1/audio/transcriptions"
-GROQ_MODELO_VOZ = "whisper-large-v3-turbo"
-```
-La API key nunca queda escrita en el código: se lee desde una variable de
-entorno, así puedes compartir el repositorio en GitHub sin exponer tu
-clave. Se definen dos endpoints distintos de Groq: uno para chat (texto →
-comando) y otro para transcripción de audio (voz → texto).
+**Configuración Groq y el prompt del sistema**
 
-```python
-COMANDOS_VALIDOS = [
-    "diurno", "nocturno", "sauna", "encender ducha", "apagar ducha",
-    "abrir persiana", "cerrar persiana", "temperatura", "humedad", "estado",
-]
-MODOS_ILUMINACION_EXCLUYENTES = {"diurno", "nocturno", "sauna"}
-PROMPT_SISTEMA = f"""Eres un intérprete de comandos..."""
-```
-`COMANDOS_VALIDOS` es la lista cerrada de acciones que el sistema entiende
-— cualquier cosa fuera de esta lista se descarta. `PROMPT_SISTEMA` es el
-texto que se le manda al modelo de lenguaje explicándole exactamente cómo
-debe mapear frases en español natural (ej. "quiero dormir" → `"nocturno"`)
-a esos comandos exactos, incluyendo la regla de que puede devolver varios
-comandos separados por comas si el usuario pide más de una acción, y que
-los tres modos de luz son mutuamente excluyentes.
+Se le explica al modelo de lenguaje, en un *prompt de sistema*, cuáles son los únicos comandos válidos y cómo debe mapear frases en español ("enciende la ducha", "quiero dormir") a esos comandos exactos. También puede devolver **varios comandos separados por comas** si el usuario pide más de una acción en un solo mensaje.
 
-#### Estado del baño
-```python
-ESTADO_ACTUAL = {
-    "luz": None, "ducha": None, "persiana": None,
-    "temperatura": None, "humedad": None,
-}
-```
-Diccionario en memoria que guarda el último estado conocido del baño,
-para que `app.py` pueda mostrarlo en el dashboard sin tener que preguntar
-al ESP32 cada vez.
+**Cliente MQTT y estado del baño**
 
-```python
-def _actualizar_estado_desde_mensaje(mensaje: str):
-```
-Cada vez que llega un mensaje del ESP32 (ej. `"Modo DIURNO activado"`,
-`"Ducha ENCENDIDA"`, `"Temp: 23.50 C | Hum: 45.00 %"`), esta función lo
-analiza con `if/elif` y expresiones regulares (`re.search`) para
-actualizar los campos correspondientes de `ESTADO_ACTUAL`.
+`ESTADO_ACTUAL` es un diccionario que se va actualizando cada vez que llega un mensaje del ESP32 por el topic de estado (por ejemplo, "Ducha ENCENDIDA" o "Temp: 23.50 C | Hum: 45.00 %"). La función `_actualizar_estado_desde_mensaje()` usa expresiones regulares para extraer temperatura y humedad.
 
-```python
-def obtener_estado() -> dict:
-```
-Devuelve una copia de `ESTADO_ACTUAL` más el campo `mqtt_conectado`, para
-que `app.py` la sirva directamente como JSON en la ruta `/api/estado`.
+**Conexión MQTT no bloqueante**
 
-#### Callbacks de conexión MQTT
-```python
-def al_conectar(client, userdata, flags, reason_code, properties=None):
-def al_desconectar(client, userdata, flags, reason_code, properties=None):
-def al_recibir_mensaje(client, userdata, msg):
-```
-Son funciones que la librería `paho-mqtt` llama automáticamente en
-distintos eventos: `al_conectar` se dispara al lograr conexión con el
-broker (y ahí se hace la suscripción al topic de estado);
-`al_desconectar` marca la bandera `mqtt_conectado = False` si se pierde la
-conexión; `al_recibir_mensaje` se dispara cada vez que llega un mensaje al
-topic suscrito, y llama a `_actualizar_estado_desde_mensaje`.
+La conexión es asíncrona: si el broker tarda o falla, el programa no se congela. El hilo de red de `paho-mqtt` reintenta solo, de forma indefinida.
 
-```python
-mqtt_client.on_connect = al_conectar
-mqtt_client.on_disconnect = al_desconectar
-mqtt_client.on_message = al_recibir_mensaje
-mqtt_client.reconnect_delay_set(min_delay=1, max_delay=30)
-```
-Aquí se "engancha" cada callback a su evento correspondiente, y se
-configura que, si se pierde la conexión, los reintentos empiecen esperando
-1 segundo y vayan aumentando hasta un máximo de 30 segundos entre intento
-e intento (para no saturar al broker).
+**Envío de comandos**
 
-#### Conexión y envío de comandos
-```python
-def esta_conectado_mqtt() -> bool:
-```
-Devuelve simplemente el valor actual de la bandera `mqtt_conectado`, para
-que otros archivos puedan consultar el estado de conexión sin acceder
-directamente a la variable interna.
+Publican el o los comandos en el topic MQTT que escucha el ESP32, con una pequeña pausa entre comandos múltiples para que el microcontrolador no reciba todo de golpe.
 
-```python
-def conectar_mqtt():
-    mqtt_client.connect_async(BROKER, PUERTO, keepalive=60)
-    mqtt_client.loop_start()
-```
-Inicia la conexión de forma **asíncrona** (no bloqueante): si el broker
-tarda o falla, el programa no se congela. `loop_start()` lanza un hilo en
-segundo plano que mantiene la conexión viva y reintenta solo,
-indefinidamente. Después, la función espera hasta 8 segundos
-(`SEGUNDOS_ESPERA_CONEXION_INICIAL`) a que se confirme la conexión antes
-de seguir, solo para dar feedback inicial al usuario; si no conecta en ese
-tiempo, avisa por consola pero el programa sigue funcionando (la conexión
-se completará sola en segundo plano).
+**Interpretación de texto con Groq**
 
-```python
-def enviar_comando_esp32(comando: str):
-```
-Publica un solo comando en `TOPIC_COMANDO` usando
-`mqtt_client.publish(...)`. Antes de intentar publicar, revisa que
-`mqtt_conectado` sea `True`; si no, aborta y avisa el error. También
-revisa el código de retorno de `publish()` para detectar fallos al
-encolar el mensaje.
+Envía el texto del usuario a la API de Groq junto con el prompt de sistema, con reintentos automáticos (backoff exponencial) si hay error de red o el servidor está saturado (código 429 o 5xx). Al final limpia la respuesta con `_depurar_lista_comandos()`, que descarta cualquier palabra que no sea un comando válido, y si el usuario pidió dos modos de luz contradictorios en el mismo mensaje, se queda solo con el último.
 
-```python
-def enviar_comandos_esp32(comandos: list[str]) -> bool:
-```
-Recorre una lista de comandos y llama a `enviar_comando_esp32()` para cada
-uno, con una pequeña pausa (`SEGUNDOS_ENTRE_COMANDOS = 0.2`) entre cada
-envío, para que el ESP32 no reciba todo de golpe cuando el usuario pide
-varias acciones en un solo mensaje (ej. "enciende la ducha y abre la
-persiana").
+**Transcripción de voz**
 
-#### Interpretación de texto con Groq
-```python
-def _depurar_lista_comandos(comandos: list[str]) -> list[str]:
-```
-Limpia la respuesta cruda del modelo de lenguaje: recorre la lista de
-strings, descarta cualquier palabra que no esté en `COMANDOS_VALIDOS`,
-elimina duplicados, y si detecta más de un modo de luz mutuamente
-excluyente en la misma respuesta (ej. el modelo devolvió `"diurno"` y
-`"nocturno"` a la vez), se queda solo con el último de esos modos,
-respetando la regla de exclusividad.
-
-```python
-def interpretar_mensaje(texto_usuario: str) -> list[str] | None:
-```
-Es la función principal de interpretación. Paso a paso:
-1. Verifica que exista la API key; si no, avisa y devuelve `None`.
-2. Arma el cuerpo de la petición HTTP con el prompt de sistema y el texto
-   del usuario, usando `temperature=0` (respuestas deterministas, sin
-   creatividad) y `reasoning_effort="low"` (respuesta rápida).
-3. Intenta hasta 3 veces (`GROQ_MAX_REINTENTOS`) si hay timeout, error de
-   red, o el servidor responde 429 (demasiadas peticiones) o 5xx (error
-   del servidor), con espera exponencial entre intentos (1.5s, 3s, 6s).
-4. Si la respuesta es 401, la API key es inválida — se detiene sin
-   reintentar.
-5. Si la respuesta es 200, extrae el contenido del mensaje, lo pasa a
-   minúsculas, lo separa por comas, y lo limpia con
-   `_depurar_lista_comandos()`.
-6. Si el modelo respondió `"ninguno"` o la lista quedó vacía después de
-   depurar, devuelve `None` (no se reconoció ningún comando).
-
-#### Transcripción de voz
-```python
-def transcribir_audio(audio_bytes, nombre_archivo="audio.wav", mime="audio/wav") -> str | None:
-```
-Envía el audio grabado (bytes crudos) al endpoint de Whisper de Groq como
-un archivo `multipart/form-data`, especificando `language="es"` y
-`response_format="text"` para que la respuesta venga como texto plano
-listo para pasarse directamente a `interpretar_mensaje()`. Maneja los
-mismos casos de error que la función anterior (sin API key, 401, otros
-códigos de error).
-
----
+Envía el audio grabado (desde el navegador o el micrófono) a la API de Whisper de Groq, y devuelve el texto transcrito en español, que luego se vuelve a pasar por `interpretar_mensaje()`.
 
 ### 2. `chatbot_bano.py` — interfaz de consola
 
-```python
-def main():
-    core.conectar_mqtt()
-    while True:
-        texto = input("Tú: ").strip()
-        if texto.lower() == "salir":
-            break
-        comandos = core.interpretar_mensaje(texto)
-        if not comandos:
-            print("Bot: No logré identificar ningún comando válido...")
-            continue
-        core.enviar_comandos_esp32(comandos)
-```
-Es un loop simple de consola: primero conecta MQTT, luego entra en un
-bucle infinito que lee lo que el usuario escribe con `input()`. Si escribe
-`"salir"`, rompe el loop y termina. Si el texto está vacío, lo ignora y
-vuelve a pedir entrada (`continue`). Si hay texto, lo manda a
-`interpretar_mensaje()`; si no se reconoció ningún comando, avisa y
-continúa; si sí, imprime qué va a ejecutar y llama a
-`enviar_comandos_esp32()`.
-
-```python
-finally:
-    core.mqtt_client.loop_stop()
-    core.mqtt_client.disconnect()
-```
-Al terminar el programa (ya sea por `"salir"` o por `Ctrl+C`, capturado
-con `except KeyboardInterrupt`), el bloque `finally` se asegura de cerrar
-ordenadamente el hilo de MQTT y desconectar del broker, sin importar cómo
-haya terminado el loop.
-
----
+Es un loop simple: lee lo que el usuario escribe, lo pasa a `bano_core.interpretar_mensaje()`, y si se reconoce algún comando, lo envía al ESP32. Escribiendo `"salir"` termina el programa y cierra la conexión MQTT de forma ordenada.
 
 ### 3. `app.py` — servidor web (Flask)
 
-```python
-logging.getLogger("werkzeug").setLevel(logging.ERROR)
-```
-Apaga el log automático de Flask (una línea por cada petición HTTP tipo
-`127.0.0.1 - - [fecha] "POST /api/comando..."`), dejando la consola limpia
-para solo mostrar los mensajes propios del programa.
+**Detección de IP local:** truco para obtener la IP del PC en la red local sin necesitar internet real: abre un socket UDP hacia una IP externa solo para que el sistema operativo elija la interfaz de red correcta, y lee la IP desde ahí.
 
-```python
-def obtener_ip_local() -> str:
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        s.connect(("8.8.8.8", 80))
-        return s.getsockname()[0]
-    except Exception:
-        return "127.0.0.1"
-    finally:
-        s.close()
-```
-Truco para obtener la IP del PC en la red local sin necesitar una
-conexión real a internet: abre un socket UDP hacia una IP externa
-(`8.8.8.8`, un DNS público de Google) solo para forzar al sistema
-operativo a elegir qué interfaz de red usaría, y lee la IP local desde
-ahí (`getsockname()`). Si algo falla, cae de vuelta a `"127.0.0.1"`.
+**Rutas principales:**
 
-```python
-@app.route("/")
-def index():
-    return render_template("index.html")
-```
-Sirve la página principal — el dashboard móvil — desde la carpeta
-`templates/`.
+| Ruta | Método | Qué hace |
+|---|---|---|
+| `/` | GET | Sirve `templates/index.html` |
+| `/api/comando` | POST | Recibe texto, lo interpreta con Groq y envía comandos al ESP32 |
+| `/api/comando-voz` | POST | Recibe un archivo de audio, lo transcribe y luego hace lo mismo que `/api/comando` |
+| `/api/estado` | GET | Devuelve el último estado conocido del baño (para el dashboard) |
+| `/api/refrescar` | POST | Le pide directamente al ESP32 que reporte estado (sin pasar por Groq) |
 
-```python
-@app.route("/api/comando", methods=["POST"])
-def api_comando():
-```
-Recibe un JSON con un campo `"texto"`, valida que no esté vacío, lo pasa
-por `core.interpretar_mensaje()`, y si se reconocieron comandos los envía
-con `core.enviar_comandos_esp32()`. Devuelve un JSON con el resultado
-(`ok`, `texto`, `comandos`, `mqtt_conectado`) para que el navegador
-actualice la interfaz.
-
-```python
-@app.route("/api/comando-voz", methods=["POST"])
-def api_comando_voz():
-```
-Igual que la ruta anterior, pero primero recibe un archivo de audio
-(`request.files["audio"]`), lo transcribe con
-`core.transcribir_audio()`, y luego sigue el mismo flujo: interpreta el
-texto resultante y envía los comandos si se reconoció alguno.
-
-```python
-@app.route("/api/estado")
-def api_estado():
-    return jsonify(core.obtener_estado())
-```
-Ruta de solo lectura que el navegador consulta periódicamente para
-repintar el dashboard con el último estado conocido del baño.
-
-```python
-@app.route("/api/refrescar", methods=["POST"])
-def api_refrescar():
-    enviado = core.enviar_comando_esp32("estado")
-    return jsonify({"ok": enviado})
-```
-Le pide directamente al ESP32 que reporte su estado (sin pasar por Groq),
-para refrescar temperatura y humedad en el dashboard sin gastar una
-llamada a la API de lenguaje.
-
-```python
-if __name__ == "__main__":
-    core.conectar_mqtt()
-    ip_local = obtener_ip_local()
-    ...
-    app.run(host="0.0.0.0", port=5000, ssl_context="adhoc", debug=False)
-```
-Punto de entrada: conecta MQTT, calcula la IP local para mostrarla en
-consola, y arranca el servidor Flask. `host="0.0.0.0"` hace que el
-servidor sea visible desde otros dispositivos de la red (como el
-celular), no solo desde el propio PC. `ssl_context="adhoc"` habilita
-HTTPS autofirmado, necesario para que el navegador dé acceso al
-micrófono.
-
----
+Corre con HTTPS autofirmado (`ssl_context="adhoc"`) porque los navegadores solo permiten acceso al micrófono en páginas seguras. `host="0.0.0.0"` hace que el servidor sea visible desde otros dispositivos de la red (el celular), no solo desde el propio PC.
 
 ### 4. `templates/index.html` — interfaz móvil
 
-**Dashboard visual — pintado del estado:**
-```javascript
-function pintarDashboard(data) {
-  document.getElementById('cardDiurno').classList.toggle('activa', data.luz === 'diurno');
-  ...
-}
-```
-Recibe el JSON de `/api/estado` y actualiza visualmente cada tarjeta:
-resalta la tarjeta del modo de luz activo, cambia el texto y color del
-badge de ducha/persiana, y actualiza los valores numéricos de temperatura
-y humedad.
-
-**Toques en las tarjetas — envío de comandos directos:**
-```javascript
-document.getElementById('cardDiurno').addEventListener('click', () => enviarTexto('diurno'));
-```
-Cada tarjeta de luz, al tocarla, llama a `enviarTexto()` con el comando
-correspondiente directamente (sin pasar por reconocimiento de lenguaje
-natural, ya que el texto ya es exactamente el comando válido).
-
-**Botón de micrófono (push-to-talk):**
-```javascript
-mediaRecorder = new MediaRecorder(stream);
-mediaRecorder.ondataavailable = (e) => chunksAudio.push(e.data);
-mediaRecorder.onstop = async () => {
-  const blob = new Blob(chunksAudio, { type: 'audio/webm' });
-  const formData = new FormData();
-  formData.append('audio', blob, 'comando.webm');
-  const resp = await fetch('/api/comando-voz', { method: 'POST', body: formData });
-  ...
-};
-```
-Al presionar y mantener el botón (`touchstart`/`mousedown`), se pide
-permiso de micrófono y se empieza a grabar con `MediaRecorder`. Al soltar
-(`touchend`/`mouseup`), se detiene la grabación, se arma un `Blob` de
-audio, y se envía como `FormData` a `/api/comando-voz`, donde el backend
-lo transcribe e interpreta.
-
-**Respuesta por voz (Text-to-Speech):**
-```javascript
-function hablar(texto) {
-  if (!vozActiva || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(texto);
-  utter.lang = 'es-ES';
-  window.speechSynthesis.speak(utter);
-}
-```
-Usa la API nativa del navegador para leer en voz alta la confirmación de
-cada comando ejecutado. `FRASES_COMANDO` traduce el nombre técnico del
-comando (ej. `"encender ducha"`) a una frase más natural para hablarla
-(ej. `"Ducha encendida"`). El botón de altavoz en la esquina permite
-activar/desactivar esta función, guardando la preferencia en
-`localStorage` para que se recuerde entre visitas.
-
-**Actualización periódica:**
-```javascript
-setInterval(actualizarEstado, 5000);
-setInterval(refrescarSensores, 20000);
-```
-El dashboard consulta `/api/estado` cada 5 segundos (para reflejar
-cambios hechos desde otro dispositivo, por ejemplo), y cada 20 segundos le
-pide al ESP32, vía `/api/refrescar`, que reporte temperatura y humedad
-actualizadas.
-
----
+Dashboard visual con tarjetas para los 3 modos de luz (mutuamente excluyentes), toggles de ducha/persiana y tarjetas de sensores (temperatura/humedad), que se repintan cada vez que llega estado nuevo. El botón de micrófono usa `MediaRecorder` para grabar mientras se mantiene presionado, y el navegador confirma cada acción en voz alta con `SpeechSynthesisUtterance`.
 
 ### 5. `DuchaInteligente.ino` — firmware del ESP32
 
-**Conexión WiFi con reconexión no bloqueante:**
-```cpp
-void conectarWiFi() { ... }       // conexión inicial, con timeout de 15s
-void gestionarWiFi() {
-  if (WiFi.status() == WL_CONNECTED) { ... return; }
-  // reintenta cada INTERVALO_RECONEXION_WIFI (10s) sin bloquear el loop()
-}
-```
-`gestionarWiFi()` se llama en cada vuelta del `loop()`. Si el router se
-reinicia o hay un corte de señal, el ESP32 reintenta conectarse solo cada
-10 segundos, sin usar `delay()` bloqueante que congelaría el resto del
-sistema (sensores, MQTT, etc.).
+Maneja reconexión de WiFi y MQTT no bloqueante, modos de luz mutuamente excluyentes (siempre apaga los otros antes de encender uno), la persiana con servomotor, lectura periódica del sensor DHT11, y el procesamiento de comandos recibidos tanto por MQTT como por el monitor serial (útil para pruebas sin depender del WiFi).
 
-**Modos de luz mutuamente excluyentes:**
-```cpp
-void apagarLuces() { /* apaga diurno, nocturno y sauna */ }
-void modoDiurno() { apagarLuces(); digitalWrite(LED_BLANCO_1, HIGH); ... }
-void modoNocturno() { apagarLuces(); ... }
-void modoSauna() { apagarLuces(); ... }
-```
-Antes de encender cualquier modo de iluminación, siempre se apagan todos
-los demás con `apagarLuces()`. Esto garantiza que nunca queden dos modos
-activos a la vez, sin importar el orden en que lleguen los comandos desde
-Python.
+---
 
-**Ducha:**
-```cpp
-void encenderDucha() { digitalWrite(LED_DUCHA_1, HIGH); digitalWrite(LED_DUCHA_2, HIGH); ... }
-void apagarDucha() { digitalWrite(LED_DUCHA_1, LOW); digitalWrite(LED_DUCHA_2, LOW); ... }
-```
-Enciende o apaga los pines correspondientes y publica el nuevo estado en
-`TOPIC_ESTADO` para que Python lo registre.
+## 🎛 Comandos disponibles
 
-**Persiana con servomotor:**
-```cpp
-void abrirPersiana() { persiana.write(165); ... }
-void cerrarPersiana() { persiana.write(75); ... }
-```
-El servo se mueve a un ángulo fijo para cada posición: 165° para abierta,
-75° para cerrada.
+| Comando | Acción |
+|---|---|
+| `diurno` | Enciende la iluminación diurna (luz blanca) |
+| `nocturno` | Enciende la iluminación nocturna (luz tenue) |
+| `sauna` | Enciende el modo sauna |
+| `encender ducha` | Enciende la ducha |
+| `apagar ducha` | Apaga la ducha |
+| `abrir persiana` | Abre la persiana motorizada |
+| `cerrar persiana` | Cierra la persiana motorizada |
+| `temperatura` | Consulta la temperatura actual |
+| `humedad` | Consulta la humedad actual |
+| `estado` | Consulta el estado general del baño |
 
-**Sensor DHT11 con lectura no bloqueante:**
-```cpp
-void leerDHT11() {
-  if (millis() - ultimaLectura < INTERVALO_DHT) return;
-  ultimaLectura = millis();
-  float nuevaHumedad = dht.readHumidity();
-  float nuevaTemperatura = dht.readTemperature();
-  if (isnan(nuevaHumedad) || isnan(nuevaTemperatura)) { ... return; }
-  humedad = nuevaHumedad;
-  temperatura = nuevaTemperatura;
-}
-```
-Se evita leer el sensor en cada vuelta del loop (el DHT11 es demasiado
-lento para eso); solo se lee cada `INTERVALO_DHT` (2 segundos), y se
-valida con `isnan()` que la lectura no haya fallado antes de guardarla.
-
-**Procesamiento de comandos:**
-```cpp
-void procesarComando(String comando) {
-  comando.trim();
-  comando.toLowerCase();
-  if (comando == "diurno") { modoDiurno(); }
-  else if (comando == "nocturno") { modoNocturno(); }
-  ...
-  else { Serial.println("Comando no reconocido."); }
-}
-```
-Recibe el string del comando (venga de MQTT o del monitor serial), lo
-normaliza (quita espacios sobrantes, pasa a minúsculas), y lo compara
-contra cada comando válido con una cadena de `if/else if` para ejecutar la
-acción correspondiente.
-
-**Callback MQTT:**
-```cpp
-void callbackMQTT(char* topic, byte* payload, unsigned int length) {
-  String mensaje;
-  for (unsigned int i = 0; i < length; i++) { mensaje += (char)payload[i]; }
-  procesarComando(mensaje);
-}
-```
-Se ejecuta automáticamente cada vez que llega un mensaje al topic
-suscrito (`TOPIC_COMANDO`). El payload llega como bytes crudos, así que
-este bucle lo reconstruye caracter por caracter en un `String`, y lo pasa
-a `procesarComando()`.
-
-**Reconexión MQTT:**
-```cpp
-void reconectarMQTT() {
-  while (!mqttClient.connected() && WiFi.status() == WL_CONNECTED) {
-    String clientId = "ESP32DuchaInteligente-" + String(random(0xffff), HEX);
-    if (mqttClient.connect(clientId.c_str())) {
-      mqttClient.subscribe(TOPIC_COMANDO);
-      mqttClient.publish(TOPIC_ESTADO, "ESP32 conectado y listo");
-    } else {
-      delay(5000);
-    }
-  }
-}
-```
-Genera un ID de cliente aleatorio (`clientId`) en cada intento, para
-evitar colisiones con otros dispositivos conectados al mismo broker
-público (si dos dispositivos usan el mismo ID, uno desconecta al otro).
-Si falla la conexión, espera 5 segundos antes de reintentar.
-
-**`setup()` y `loop()`:**
-```cpp
-void setup() {
-  // configura pines, sensores, servo, WiFi, MQTT
-  modoDiurno(); // estado inicial
-}
-
-void loop() {
-  gestionarWiFi();
-  if (WiFi.status() == WL_CONNECTED) {
-    if (!mqttClient.connected()) { reconectarMQTT(); }
-    mqttClient.loop();
-  }
-  leerDHT11();
-  if (Serial.available()) {
-    String comando = Serial.readStringUntil('\n');
-    procesarComando(comando);
-  }
-  delay(20);
-}
-```
-`setup()` corre una sola vez al encender el ESP32: prepara todos los
-pines y periféricos, y deja el sistema en modo diurno por defecto.
-`loop()` corre indefinidamente: gestiona WiFi, mantiene viva la conexión
-MQTT (`mqttClient.loop()` procesa mensajes entrantes/salientes), lee el
-sensor, y también acepta comandos escritos directamente por el monitor
-serial (útil para pruebas sin depender de la red).
+> 💡 También puedes combinar varios en un solo mensaje: *"enciende la ducha y abre la persiana"*.
 
 ---
 
 ## 🔒 Nota de seguridad
 
-`broker.hivemq.com` es un broker MQTT **público y sin autenticación**.
-Cualquiera que conozca el prefijo de topic (`unimilitar_duchainteligente_hearvl2026`)
-podría enviar comandos al sistema. Para un proyecto académico de
-demostración esto es aceptable, pero para un uso real se recomendaría un
-broker privado con usuario/contraseña o TLS.
+`broker.hivemq.com` es un broker MQTT **público y sin autenticación**. Cualquiera que conozca el prefijo de topic (`unimilitar_duchainteligente_hearvl2026`) podría enviar comandos al sistema. Para un proyecto académico de demostración esto es aceptable, pero para un uso real se recomendaría un broker privado con usuario/contraseña o TLS.
 
 ---
 
 ## 👤 Autor
 
-Proyecto desarrollado por Julián — Ingeniería Mecatrónica, Universidad
-Militar Nueva Granada.
+Proyecto desarrollado por **Julián** — Ingeniería Mecatrónica, Universidad Militar Nueva Granada.
+
+<div align="center">
+<sub>Hecho con 🛁, ESP32 y un poco de IA</sub>
+</div>
