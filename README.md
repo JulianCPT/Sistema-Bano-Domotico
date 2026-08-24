@@ -508,7 +508,7 @@ Maneja reconexión de WiFi y MQTT no bloqueante, iluminación con un LED RGB (`a
 
 ## 👤 Autor
 
-Proyecto desarrollado por **Julián** — Ingeniería Mecatrónica, Universidad Militar Nueva Granada.
+Proyecto desarrollado por **Julián Camilo Pérez Torres Y Juan Sebastian Avila Buitrago** — Ingeniería Mecatrónica, Universidad Militar Nueva Granada.
 
 <div align="center">
 <sub>Hecho con 🛁, ESP32 y un poco de IA</sub>
