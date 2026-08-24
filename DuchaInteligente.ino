@@ -213,6 +213,18 @@ void modoSauna() {
 
 
 // =====================================================
+// LUCES APAGADAS
+// =====================================================
+
+void apagarLuces() {
+  setRGB(0, 0, 0);
+
+  Serial.println("Luces APAGADAS");
+  mqttClient.publish(TOPIC_ESTADO, "Luces APAGADAS");
+}
+
+
+// =====================================================
 // DUCHA
 // =====================================================
 
@@ -308,6 +320,9 @@ void procesarComando(String comando) {
   }
   else if (comando == "sauna") {
     modoSauna();
+  }
+  else if (comando == "apagar luces") {
+    apagarLuces();
   }
   else if (comando == "encender ducha") {
     encenderDucha();
@@ -449,13 +464,13 @@ void setup() {
   Serial.println("Sistema iniciado correctamente.");
   Serial.println();
   Serial.println("COMANDOS DISPONIBLES:");
-  Serial.println("diurno, nocturno, sauna, encender ducha,");
+  Serial.println("diurno, nocturno, sauna, apagar luces, encender ducha,");
   Serial.println("apagar ducha, abrir persiana, cerrar persiana,");
   Serial.println("temperatura, humedad, estado");
   Serial.println();
 
-  // Modo inicial
-  modoDiurno();
+  // Estado inicial: luces apagadas
+  apagarLuces();
 }
 
 
