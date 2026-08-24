@@ -1,0 +1,4 @@
+flask
+pyopenssl
+paho-mqtt
+requests
