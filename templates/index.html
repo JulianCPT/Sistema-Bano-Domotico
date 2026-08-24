@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Baño Inteligente</title>
+<style>
+  :root {
+    --azul: #2563eb;
+    --azul-suave: rgba(37, 99, 235, 0.15);
+    --rojo: #dc2626;
+    --gris-fondo: #0b1220;
+    --gris-card: #16213a;
+    --gris-borde: #263252;
+    --gris-texto: #8b9bc1;
+    --verde: #22c55e;
+    --amarillo: #f59e0b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--gris-fondo);
+    color: #f1f5f9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 18px 16px 36px;
+  }
+
+  .header {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .header h1 { font-size: 1.2rem; margin: 0; }
+  .header-derecha {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .estado {
+    font-size: 0.75rem;
+    color: var(--gris-texto);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--rojo);
+    flex-shrink: 0;
+  }
+  .punto.ok { background: var(--verde); }
+
+  .btn-voz-toggle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1.5px solid var(--gris-borde);
+    background: var(--gris-card);
+    color: var(--gris-texto);
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-voz-toggle.activo {
+    border-color: var(--azul);
+    color: #fff;
+    background: var(--azul-suave);
+  }
+
+  .seccion-titulo {
+    width: 100%;
+    max-width: 420px;
+    font-size: 0.75rem;
+    color: var(--gris-texto);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 18px 0 8px;
+  }
+
+  .grid-luz {
+    width: 100%;
+    max-width: 420px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .card-luz {
+    background: var(--gris-card);
+    border: 1.5px solid var(--gris-borde);
+    border-radius: 14px;
+    padding: 14px 6px;
+    text-align: center;
+    color: #cbd5e1;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .card-luz .icono { font-size: 1.6rem; display: block; margin-bottom: 6px; }
+  .card-luz .nombre { font-size: 0.75rem; }
+  .card-luz.activa {
+    border-color: var(--azul);
+    background: var(--azul-suave);
+    color: #fff;
+  }
+
+  .grid-doble {
+    width: 100%;
+    max-width: 420px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .card-toggle {
+    background: var(--gris-card);
+    border: 1.5px solid var(--gris-borde);
+    border-radius: 14px;
+    padding: 16px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .card-toggle .fila-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .card-toggle .icono { font-size: 1.5rem; }
+  .card-toggle .badge {
+    font-size: 0.65rem;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: #334155;
+    color: var(--gris-texto);
+  }
+  .card-toggle .badge.on { background: rgba(34, 197, 94, 0.2); color: var(--verde); }
+  .card-toggle .badge.off { background: rgba(148, 163, 184, 0.15); color: var(--gris-texto); }
+  .card-toggle .nombre { font-size: 0.85rem; color: #cbd5e1; }
+
+  .card-stat {
+    background: var(--gris-card);
+    border: 1.5px solid var(--gris-borde);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+  }
+  .card-stat .valor { font-size: 1.6rem; font-weight: 700; }
+  .card-stat .valor .unidad { font-size: 0.9rem; font-weight: 400; color: var(--gris-texto); }
+  .card-stat .etiqueta { font-size: 0.7rem; color: var(--gris-texto); margin-top: 2px; }
+
+  .toast {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: var(--gris-card);
+    border: 1px solid var(--gris-borde);
+    color: #f1f5f9;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    opacity: 0;
+    transition: all 0.25s ease;
+    pointer-events: none;
+    z-index: 10;
+    max-width: 90%;
+    text-align: center;
+  }
+  .toast.mostrar { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: var(--rojo); color: #fca5a5; }
+
+  .zona-voz {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 26px 0 6px;
+  }
+  .mic-btn {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    border: none;
+    background: var(--azul);
+    color: white;
+    font-size: 2.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    touch-action: manipulation;
+  }
+  .mic-btn:active { transform: scale(0.96); }
+  .mic-btn.grabando {
+    background: var(--rojo);
+    box-shadow: 0 4px 30px rgba(220, 38, 38, 0.6);
+    animation: pulso 1.2s infinite;
+  }
+  @keyframes pulso {
+    0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5); }
+    70% { box-shadow: 0 0 0 20px rgba(220, 38, 38, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+  }
+  .hint { font-size: 0.8rem; color: var(--gris-texto); margin-top: 10px; }
+
+  .form-texto {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+  }
+  .form-texto input {
+    flex: 1;
+    padding: 13px 16px;
+    border-radius: 12px;
+    border: 1px solid var(--gris-borde);
+    background: var(--gris-card);
+    color: white;
+    font-size: 0.95rem;
+  }
+  .form-texto button {
+    padding: 0 18px;
+    border-radius: 12px;
+    border: none;
+    background: var(--azul);
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="header">
+    <h1>🛁 Baño Inteligente</h1>
+    <div class="header-derecha">
+      <button class="btn-voz-toggle activo" id="btnVozToggle" title="Activar/desactivar respuesta por voz">🔊</button>
+      <div class="estado">
+        <span class="punto" id="puntoEstado"></span>
+        <span id="textoEstado">Conectando...</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="seccion-titulo">Iluminación</div>
+  <div class="grid-luz">
+    <button class="card-luz" data-cmd="diurno" id="cardDiurno">
+      <span class="icono">☀️</span>
+      <span class="nombre">Diurno</span>
+    </button>
+    <button class="card-luz" data-cmd="nocturno" id="cardNocturno">
+      <span class="icono">🌙</span>
+      <span class="nombre">Nocturno</span>
+    </button>
+    <button class="card-luz" data-cmd="sauna" id="cardSauna">
+      <span class="icono">♨️</span>
+      <span class="nombre">Sauna</span>
+    </button>
+  </div>
+
+  <div class="seccion-titulo">Ducha y persiana</div>
+  <div class="grid-doble">
+    <button class="card-toggle" id="cardDucha">
+      <div class="fila-top">
+        <span class="icono">🚿</span>
+        <span class="badge" id="badgeDucha">—</span>
+      </div>
+      <div class="nombre">Ducha</div>
+    </button>
+    <button class="card-toggle" id="cardPersiana">
+      <div class="fila-top">
+        <span class="icono">🪟</span>
+        <span class="badge" id="badgePersiana">—</span>
+      </div>
+      <div class="nombre">Persiana</div>
+    </button>
+  </div>
+
+  <div class="seccion-titulo">Sensores</div>
+  <div class="grid-doble">
+    <div class="card-stat">
+      <div class="valor"><span id="valorTemp">--</span><span class="unidad">°C</span></div>
+      <div class="etiqueta">Temperatura</div>
+    </div>
+    <div class="card-stat">
+      <div class="valor"><span id="valorHum">--</span><span class="unidad">%</span></div>
+      <div class="etiqueta">Humedad</div>
+    </div>
+  </div>
+
+  <div class="zona-voz">
+    <button class="mic-btn" id="micBtn">🎤</button>
+    <div class="hint" id="hintMic">Mantén presionado y habla</div>
+  </div>
+
+  <form class="form-texto" id="formTexto">
+    <input type="text" id="inputTexto" placeholder="o escribe un comando" autocomplete="off">
+    <button type="submit">Enviar</button>
+  </form>
+
+<script>
+const toast = document.getElementById('toast');
+const micBtn = document.getElementById('micBtn');
+const hintMic = document.getElementById('hintMic');
+const formTexto = document.getElementById('formTexto');
+const inputTexto = document.getElementById('inputTexto');
+const puntoEstado = document.getElementById('puntoEstado');
+const textoEstado = document.getElementById('textoEstado');
+const btnVozToggle = document.getElementById('btnVozToggle');
+
+let mediaRecorder = null;
+let chunksAudio = [];
+let grabando = false;
+let toastTimeout = null;
+
+// =====================================================
+// RESPUESTA POR VOZ (Text-to-Speech del navegador)
+// =====================================================
+
+// Se guarda en localStorage para recordar la preferencia del usuario
+let vozActiva = localStorage.getItem('vozActiva') !== 'false';
+
+function actualizarBotonVoz() {
+  btnVozToggle.textContent = vozActiva ? '🔊' : '🔇';
+  btnVozToggle.classList.toggle('activo', vozActiva);
+}
+actualizarBotonVoz();
+
+btnVozToggle.addEventListener('click', () => {
+  vozActiva = !vozActiva;
+  localStorage.setItem('vozActiva', vozActiva);
+  actualizarBotonVoz();
+  if (vozActiva) hablar('Voz activada');
+  else window.speechSynthesis.cancel();
+});
+
+// Frases naturales por comando, para que suene bien al hablarlas
+// (en vez de leer literalmente "encender ducha")
+const FRASES_COMANDO = {
+  'diurno': 'Modo diurno activado',
+  'nocturno': 'Modo nocturno activado',
+  'sauna': 'Modo sauna activado',
+  'encender ducha': 'Ducha encendida',
+  'apagar ducha': 'Ducha apagada',
+  'abrir persiana': 'Persiana abierta',
+  'cerrar persiana': 'Persiana cerrada',
+  'temperatura': 'Consultando temperatura',
+  'humedad': 'Consultando humedad',
+  'estado': 'Consultando estado del baño',
+};
+
+function hablar(texto) {
+  if (!vozActiva || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel(); // corta cualquier frase anterior sin terminar
+  const utter = new SpeechSynthesisUtterance(texto);
+  utter.lang = 'es-ES';
+  utter.rate = 1.0;
+  window.speechSynthesis.speak(utter);
+}
+
+function hablarComandos(comandos) {
+  if (!comandos || comandos.length === 0) return;
+  const frase = comandos
+    .map(c => FRASES_COMANDO[c] || c)
+    .join('. ');
+  hablar(frase);
+}
+
+// =====================================================
+// TOAST
+// =====================================================
+
+function mostrarToast(mensaje, esError) {
+  clearTimeout(toastTimeout);
+  toast.textContent = mensaje;
+  toast.classList.toggle('error', !!esError);
+  toast.classList.add('mostrar');
+  toastTimeout = setTimeout(() => toast.classList.remove('mostrar'), 2800);
+}
+
+async function enviarTexto(texto) {
+  if (!texto.trim()) return;
+  try {
+    const resp = await fetch('/api/comando', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto }),
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      mostrarToast('Hecho: ' + data.comandos.join(', '));
+      hablarComandos(data.comandos);
+    } else {
+      mostrarToast(data.error || 'No entendí ese comando', true);
+      hablar('No entendí ese comando');
+    }
+    setTimeout(actualizarEstado, 500);
+  } catch (e) {
+    mostrarToast('Error de conexión con el servidor', true);
+    hablar('Error de conexión con el servidor');
+  }
+}
+
+formTexto.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const texto = inputTexto.value;
+  inputTexto.value = '';
+  enviarTexto(texto);
+});
+
+document.getElementById('cardDiurno').addEventListener('click', () => enviarTexto('diurno'));
+document.getElementById('cardNocturno').addEventListener('click', () => enviarTexto('nocturno'));
+document.getElementById('cardSauna').addEventListener('click', () => enviarTexto('sauna'));
+
+document.getElementById('cardDucha').addEventListener('click', () => {
+  const encendida = document.getElementById('badgeDucha').dataset.on === 'true';
+  enviarTexto(encendida ? 'apagar ducha' : 'encender ducha');
+});
+
+document.getElementById('cardPersiana').addEventListener('click', () => {
+  const abierta = document.getElementById('badgePersiana').dataset.open === 'true';
+  enviarTexto(abierta ? 'cerrar persiana' : 'abrir persiana');
+});
+
+async function iniciarGrabacion() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    chunksAudio = [];
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = (e) => chunksAudio.push(e.data);
+    mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(chunksAudio, { type: 'audio/webm' });
+      hintMic.textContent = 'Procesando...';
+
+      const formData = new FormData();
+      formData.append('audio', blob, 'comando.webm');
+
+      try {
+        const resp = await fetch('/api/comando-voz', { method: 'POST', body: formData });
+        const data = await resp.json();
+        if (data.ok) {
+          mostrarToast('"' + data.texto + '" → ' + data.comandos.join(', '));
+          hablarComandos(data.comandos);
+        } else {
+          mostrarToast(data.error || 'No entendí lo que dijiste', true);
+          hablar('No entendí lo que dijiste');
+        }
+        setTimeout(actualizarEstado, 500);
+      } catch (e) {
+        mostrarToast('Error de conexión con el servidor', true);
+        hablar('Error de conexión con el servidor');
+      }
+      hintMic.textContent = 'Mantén presionado y habla';
+    };
+    mediaRecorder.start();
+    grabando = true;
+    micBtn.classList.add('grabando');
+    hintMic.textContent = 'Escuchando... suelta para enviar';
+  } catch (e) {
+    hintMic.textContent = 'No se pudo acceder al micrófono';
+  }
+}
+
+function detenerGrabacion() {
+  if (mediaRecorder && grabando) mediaRecorder.stop();
+  grabando = false;
+  micBtn.classList.remove('grabando');
+}
+
+micBtn.addEventListener('touchstart', (e) => { e.preventDefault(); iniciarGrabacion(); });
+micBtn.addEventListener('touchend', (e) => { e.preventDefault(); detenerGrabacion(); });
+micBtn.addEventListener('mousedown', iniciarGrabacion);
+micBtn.addEventListener('mouseup', detenerGrabacion);
+
+function pintarDashboard(data) {
+  document.getElementById('cardDiurno').classList.toggle('activa', data.luz === 'diurno');
+  document.getElementById('cardNocturno').classList.toggle('activa', data.luz === 'nocturno');
+  document.getElementById('cardSauna').classList.toggle('activa', data.luz === 'sauna');
+
+  const badgeDucha = document.getElementById('badgeDucha');
+  if (data.ducha === true) {
+    badgeDucha.textContent = 'Encendida';
+    badgeDucha.className = 'badge on';
+    badgeDucha.dataset.on = 'true';
+  } else if (data.ducha === false) {
+    badgeDucha.textContent = 'Apagada';
+    badgeDucha.className = 'badge off';
+    badgeDucha.dataset.on = 'false';
+  }
+
+  const badgePersiana = document.getElementById('badgePersiana');
+  if (data.persiana === 'abierta') {
+    badgePersiana.textContent = 'Abierta';
+    badgePersiana.className = 'badge on';
+    badgePersiana.dataset.open = 'true';
+  } else if (data.persiana === 'cerrada') {
+    badgePersiana.textContent = 'Cerrada';
+    badgePersiana.className = 'badge off';
+    badgePersiana.dataset.open = 'false';
+  }
+
+  document.getElementById('valorTemp').textContent = data.temperatura != null ? data.temperatura.toFixed(1) : '--';
+  document.getElementById('valorHum').textContent = data.humedad != null ? data.humedad.toFixed(0) : '--';
+
+  if (data.mqtt_conectado) {
+    puntoEstado.classList.add('ok');
+    textoEstado.textContent = 'Conectado';
+  } else {
+    puntoEstado.classList.remove('ok');
+    textoEstado.textContent = 'Sin conexión';
+  }
+}
+
+async function actualizarEstado() {
+  try {
+    const resp = await fetch('/api/estado');
+    const data = await resp.json();
+    pintarDashboard(data);
+  } catch (e) {
+    textoEstado.textContent = 'Sin conexión con el servidor';
+  }
+}
+
+async function refrescarSensores() {
+  try { await fetch('/api/refrescar', { method: 'POST' }); } catch (e) {}
+}
+
+actualizarEstado();
+refrescarSensores();
+setInterval(actualizarEstado, 5000);
+setInterval(refrescarSensores, 20000);
+</script>
+
+</body>
+</html>
