@@ -158,7 +158,7 @@ Si quisieras cambiarlo, bastaría con modificar `port=5000` en `app.py` y usar e
 ### 📟 ¿Qué es el ESP32 y qué hace aquí?
 
 El **ESP32** es un microcontrolador (una "mini computadora" de bajo costo) con **WiFi integrado**, ideal para proyectos de electrónica conectada. En este sistema es el que:
-- Recibe comandos por MQTT y mueve físicamente los LEDs y el servomotor
+- Recibe comandos por MQTT y mueve físicamente el LED RGB, la bomba de la ducha y el servomotor
 - Lee el sensor de temperatura/humedad (**DHT11**)
 - Publica su estado de vuelta al broker para que el dashboard se actualice
 
@@ -206,8 +206,8 @@ Y Flask responde con algo como:
 Los **pines GPIO** (General Purpose Input/Output) son las "patitas" físicas del ESP32 que se pueden programar como entrada (leer una señal, ej. un sensor) o salida (enviar una señal, ej. encender un LED). En el código se identifican por número:
 
 ```cpp
-#define LED_BLANCO_1 25   // GPIO 25 controla un LED de luz diurna
-#define DHT_PIN 4         // GPIO 4 está conectado al sensor DHT11
+#define LED_R_PIN 25   // GPIO 25 controla el canal rojo del LED RGB
+#define DHT_PIN 4      // GPIO 4 está conectado al sensor DHT11
 ```
 
 El **DHT11** es un sensor económico que mide **temperatura y humedad** del ambiente y las entrega por un solo cable de datos. El ESP32 lo lee cada cierto intervalo (`leerDHT11()`) y publica el resultado por MQTT para que el dashboard lo muestre.
@@ -217,11 +217,11 @@ El **DHT11** es un sensor económico que mide **temperatura y humedad** del ambi
 Un **servomotor** es un motor que, a diferencia de uno normal, no gira sin parar: se le indica un **ángulo específico** (entre 0° y 180°) y se posiciona ahí y se queda quieto. Es ideal para simular la apertura y cierre de una persiana con un movimiento mecánico simple, como una manivela.
 
 ```cpp
-persiana.write(165);  // 165° = posición ABIERTA
-persiana.write(75);   // 75°  = posición CERRADA
+persiana.write(90);  // 90° = posición ABIERTA
+persiana.write(0);   // 0°  = posición CERRADA
 ```
 
-Estos ángulos (165° y 75°) se calibran de forma manual según cómo quede montado físicamente el servo respecto a la persiana — no son un estándar, son "lo que funcionó" para este montaje en particular. Si armas el tuyo distinto, es normal tener que ajustar estos números probando.
+Estos ángulos (0° y 90°) se calibran de forma manual según cómo quede montado físicamente el servo respecto a la persiana — no son un estándar, son "lo que funcionó" para este montaje en particular. Si armas el tuyo distinto, es normal tener que ajustar estos números probando.
 
 ### ⏱️ ¿Por qué no se usa `delay()` en el ESP32? (código no bloqueante)
 
@@ -280,7 +280,7 @@ El `index.html` usa varias funciones nativas del navegador (sin frameworks exter
                               │ DuchaInteligente.ino│
                               └──────────────────┘
                                         │
-                         LEDs, servo (persiana), sensor DHT11
+                         LED RGB, servo (persiana), sensor DHT11, bomba (ducha)
 ```
 
 **Idea clave:** toda la lógica de conexión MQTT y de interpretación de lenguaje natural vive en un solo archivo (`bano_core.py`) para no duplicarla entre la versión de consola y la versión web. Tanto `chatbot_bano.py` como `app.py` solo se encargan de la interfaz (consola o navegador) y llaman a las funciones de `bano_core.py`.
@@ -312,7 +312,8 @@ Sistema-Bano-Domotico/
 |---|---|
 | 🗣️ **Comandos por voz** | Habla en español natural ("enciende la ducha y abre la persiana") |
 | ⌨️ **Comandos por texto** | Desde consola o desde el campo de texto del celular |
-| 💡 **3 modos de luz** | Diurno, nocturno y sauna — mutuamente excluyentes |
+| 💡 **4 estados de luz** | Diurno, nocturno, sauna y apagado — mutuamente excluyentes, y arranca en apagado |
+| 🔘 **Botones tipo toggle** | En el dashboard, tocar el modo de luz ya activo lo apaga en vez de reenviarlo |
 | 🚿 **Control de ducha** | Encender / apagar remotamente |
 | 🪟 **Persiana motorizada** | Abrir / cerrar con servomotor |
 | 🌡️ **Sensores en vivo** | Temperatura y humedad (DHT11) en el dashboard |
@@ -325,7 +326,7 @@ Sistema-Bano-Domotico/
 
 - Python 3.10+
 - Una cuenta en [Groq](https://console.groq.com/) para obtener una API key gratuita (se usa para interpretar comandos y transcribir voz)
-- Un ESP32 con los componentes: LEDs, sensor DHT11, micro-servo
+- Un ESP32 con los componentes: LED RGB, sensor DHT11, micro-servo, módulo de bomba
 - Arduino IDE (o PlatformIO) con las librerías: `DHT sensor library`, `ESP32Servo`, `PubSubClient`
 
 ---
@@ -378,11 +379,11 @@ Se usa un broker MQTT **público**, así que se define un prefijo único de topi
 
 **Configuración Groq y el prompt del sistema**
 
-Se le explica al modelo de lenguaje, en un *prompt de sistema*, cuáles son los únicos comandos válidos y cómo debe mapear frases en español ("enciende la ducha", "quiero dormir") a esos comandos exactos. También puede devolver **varios comandos separados por comas** si el usuario pide más de una acción en un solo mensaje.
+Se le explica al modelo de lenguaje, en un *prompt de sistema*, cuáles son los únicos comandos válidos y cómo debe mapear frases en español ("enciende la ducha", "quiero dormir", "apaga la luz") a esos comandos exactos. También puede devolver **varios comandos separados por comas** si el usuario pide más de una acción en un solo mensaje.
 
 **Cliente MQTT y estado del baño**
 
-`ESTADO_ACTUAL` es un diccionario que se va actualizando cada vez que llega un mensaje del ESP32 por el topic de estado (por ejemplo, "Ducha ENCENDIDA" o "Temp: 23.50 C | Hum: 45.00 %"). La función `_actualizar_estado_desde_mensaje()` usa expresiones regulares para extraer temperatura y humedad.
+`ESTADO_ACTUAL` es un diccionario que se va actualizando cada vez que llega un mensaje del ESP32 por el topic de estado (por ejemplo, "Ducha ENCENDIDA", "Luces APAGADAS" o "Temp: 23.50 C | Hum: 45.00 %"). La función `_actualizar_estado_desde_mensaje()` usa expresiones regulares para extraer temperatura y humedad.
 
 **Conexión MQTT no bloqueante**
 
@@ -394,7 +395,7 @@ Publican el o los comandos en el topic MQTT que escucha el ESP32, con una peque�
 
 **Interpretación de texto con Groq**
 
-Envía el texto del usuario a la API de Groq junto con el prompt de sistema, con reintentos automáticos (backoff exponencial) si hay error de red o el servidor está saturado (código 429 o 5xx). Al final limpia la respuesta con `_depurar_lista_comandos()`, que descarta cualquier palabra que no sea un comando válido, y si el usuario pidió dos modos de luz contradictorios en el mismo mensaje, se queda solo con el último.
+Envía el texto del usuario a la API de Groq junto con el prompt de sistema, con reintentos automáticos (backoff exponencial) si hay error de red o el servidor está saturado (código 429 o 5xx). Al final limpia la respuesta con `_depurar_lista_comandos()`, que descarta cualquier palabra que no sea un comando válido, y si el usuario pidió dos estados de luz contradictorios en el mismo mensaje (incluyendo "apagar luces"), se queda solo con el último.
 
 **Transcripción de voz**
 
@@ -422,11 +423,11 @@ Corre con HTTPS autofirmado (`ssl_context="adhoc"`) porque los navegadores solo 
 
 ### 4. `templates/index.html` — interfaz móvil
 
-Dashboard visual con tarjetas para los 3 modos de luz (mutuamente excluyentes), toggles de ducha/persiana y tarjetas de sensores (temperatura/humedad), que se repintan cada vez que llega estado nuevo. El botón de micrófono usa `MediaRecorder` para grabar mientras se mantiene presionado, y el navegador confirma cada acción en voz alta con `SpeechSynthesisUtterance`.
+Dashboard visual con tarjetas para los 3 modos de luz, toggles de ducha/persiana y tarjetas de sensores (temperatura/humedad), que se repintan cada vez que llega estado nuevo. Las tarjetas de luz funcionan como **toggle**: si tocas el modo que ya está activo (marcado visualmente), se envía `"apagar luces"` en vez de reenviar ese mismo modo; si tocas uno distinto, cambia normalmente a ese modo. El botón de micrófono usa `MediaRecorder` para grabar mientras se mantiene presionado, y el navegador confirma cada acción en voz alta con `SpeechSynthesisUtterance`.
 
 ### 5. `DuchaInteligente.ino` — firmware del ESP32
 
-Maneja reconexión de WiFi y MQTT no bloqueante, modos de luz mutuamente excluyentes (siempre apaga los otros antes de encender uno), la persiana con servomotor, lectura periódica del sensor DHT11, y el procesamiento de comandos recibidos tanto por MQTT como por el monitor serial (útil para pruebas sin depender del WiFi).
+Maneja reconexión de WiFi y MQTT no bloqueante, iluminación con un LED RGB (`analogWrite`) para los modos diurno/nocturno/sauna y para el estado apagado, la ducha con una bomba (`PUMP_PIN`), la persiana con servomotor, lectura periódica del sensor DHT11, y el procesamiento de comandos recibidos tanto por MQTT como por el monitor serial (útil para pruebas sin depender del WiFi). El sistema **arranca con las luces apagadas** en vez de en un modo por defecto.
 
 ---
 
@@ -437,6 +438,7 @@ Maneja reconexión de WiFi y MQTT no bloqueante, modos de luz mutuamente excluye
 | `diurno` | Enciende la iluminación diurna (luz blanca) |
 | `nocturno` | Enciende la iluminación nocturna (luz tenue) |
 | `sauna` | Enciende el modo sauna |
+| `apagar luces` | Apaga la iluminación (LED en negro) |
 | `encender ducha` | Enciende la ducha |
 | `apagar ducha` | Apaga la ducha |
 | `abrir persiana` | Abre la persiana motorizada |
