@@ -65,9 +65,12 @@ Se puede controlar desde:
 
 - [Conceptos clave](#-conceptos-clave-para-entender-el-proyecto)
 - [Arquitectura general](#-arquitectura-general)
+  - [Cómo se conecta todo, paso a paso](#-cómo-se-conecta-todo-paso-a-paso)
+  - [Ventajas y desventajas de esta arquitectura](#️-ventajas-y-desventajas-de-esta-arquitectura)
 - [Estructura del repositorio](#-estructura-del-repositorio)
 - [Características](#-características)
 - [Requisitos](#️-requisitos)
+  - [Para qué sirve cada librería](#-para-qué-sirve-cada-librería)
 - [Instalación](#-instalación)
 - [Cómo correrlo](#️-cómo-correrlo)
 - [Explicación del código](#-explicación-del-código-bloque-por-bloque)
@@ -285,6 +288,31 @@ El `index.html` usa varias funciones nativas del navegador (sin frameworks exter
 
 **Idea clave:** toda la lógica de conexión MQTT y de interpretación de lenguaje natural vive en un solo archivo (`bano_core.py`) para no duplicarla entre la versión de consola y la versión web. Tanto `chatbot_bano.py` como `app.py` solo se encargan de la interfaz (consola o navegador) y llaman a las funciones de `bano_core.py`.
 
+### 🔗 Cómo se conecta todo, paso a paso
+
+Para que quede claro qué pasa realmente cuando dices "enciende la ducha", así es el recorrido completo de un comando, de principio a fin:
+
+1. **Entrada del usuario** — hablas o escribes en `chatbot_bano.py` (consola) o en `templates/index.html` (celular). Si es voz, el navegador graba el audio con `MediaRecorder` y lo manda a `app.py`.
+2. **Transcripción (solo si fue voz)** — `app.py` recibe el audio y llama a `bano_core.transcribir_audio()`, que se lo envía a Whisper (vía Groq) y recibe de vuelta el texto en español.
+3. **Interpretación con IA** — ya sea que el texto venga de la consola, del campo de texto, o de la transcripción de voz, siempre pasa por `bano_core.interpretar_mensaje()`. Esta función le manda el texto a Groq junto con el *prompt de sistema* (la lista de comandos válidos y las reglas de mapeo), y Groq devuelve uno o varios comandos exactos como `"encender ducha"`.
+4. **Publicación por MQTT** — `bano_core.enviar_comandos_esp32()` toma esos comandos y los publica en el topic `.../comando` del broker `broker.hivemq.com`. En este punto, ni la consola ni el celular hablan directo con el ESP32: solo "dejan el mensaje" en el broker.
+5. **El ESP32 recibe el comando** — como está suscrito a ese mismo topic, `callbackMQTT()` en `DuchaInteligente.ino` recibe el mensaje casi al instante y llama a `procesarComando()`, que mueve el hardware real (enciende la bomba, cambia el LED RGB, mueve el servo, etc.).
+6. **El ESP32 confirma su nuevo estado** — después de ejecutar la acción, el ESP32 publica un mensaje como `"Ducha ENCENDIDA"` en el topic `.../estado`.
+7. **La PC se entera del cambio** — tanto `chatbot_bano.py` como `app.py` están suscritos a `.../estado` a través de `bano_core.py`, así que `_actualizar_estado_desde_mensaje()` actualiza el diccionario `ESTADO_ACTUAL` en cuanto llega ese mensaje.
+8. **El dashboard se repinta** — cada 5 segundos, `index.html` le pregunta a `app.py` (`/api/estado`) cuál es el último estado conocido, y actualiza las tarjetas visuales (luz activa, ducha encendida/apagada, persiana, temperatura, humedad) sin que tengas que refrescar la página.
+
+En resumen: **nada habla directo con el ESP32**. Todo pasa por dos intermediarios — Groq (para entender lenguaje natural) y el broker MQTT (para el mensaje final) — lo cual explica varias de las ventajas y desventajas de esta arquitectura.
+
+### ⚖️ Ventajas y desventajas de esta arquitectura
+
+| ✅ Ventajas | ⚠️ Desventajas |
+|---|---|
+| **Sin IP pública ni configuración de red compleja**: como PC y ESP32 solo "salen" hacia el broker (nadie recibe conexiones entrantes), no hay que abrir puertos en el router ni lidiar con IP dinámica — funciona igual en casa, en la universidad o detrás de un NAT restrictivo. | **Dependencia total de servicios de terceros**: si `broker.hivemq.com` o la API de Groq están caídos, lentos o saturados (son gratuitos, no tienen SLA), el sistema completo deja de responder — no hay "modo offline" de respaldo. |
+| **Un solo archivo de lógica (`bano_core.py`)**: agregar un comando nuevo (como hicimos con `"apagar luces"`) se hace en un solo lugar y automáticamente funciona en consola, web, texto y voz — sin duplicar código. | **Latencia acumulada**: cada comando de voz pasa por 3 saltos de red distintos (Whisper → Groq LLM → broker MQTT), cada uno con su propio tiempo de respuesta. No es instantáneo como pulsar un interruptor físico — puede sentirse un pequeño retraso, sobre todo por voz. |
+| **Lenguaje natural real**: gracias al LLM, no hay que memorizar comandos exactos ni aprender una sintaxis rígida — "quiero dormir" y "modo nocturno" llegan al mismo resultado. | **Broker público y sin autenticación**: cualquiera que adivine o conozca tu prefijo de topic puede publicar comandos falsos al ESP32 (ver la sección de [Nota de seguridad](#-nota-de-seguridad)). Para un proyecto real habría que migrar a un broker privado. |
+| **Desacoplamiento (pub/sub)**: PC y ESP32 nunca necesitan estar activos al mismo tiempo exactamente — el broker guarda el mensaje el tiempo suficiente para que el otro lado lo recoja, a diferencia de una conexión directa que exige que ambos estén "en línea" en el mismo instante. | **Costos ocultos en producción**: aunque Groq es gratuito ahora mismo para uso moderado, un LLM y un modelo de transcripción de voz son mucho más caros de operar (y de escalar) que simplemente comparar strings de texto con un `if`, si el proyecto creciera a muchos usuarios. |
+| **Fácil de extender a más interfaces**: como toda la lógica vive fuera de `chatbot_bano.py` y `app.py`, se podría agregar una tercera interfaz (por ejemplo un bot de Telegram) reusando `bano_core.py` casi sin cambios. | **Superficie de fallo más grande**: hay más piezas que pueden fallar de forma independiente (WiFi del ESP32, broker, API de Groq, certificado HTTPS, micrófono del navegador) comparado con un sistema simple de botones físicos o una app que hable directo por Bluetooth con el ESP32. |
+
 ---
 
 ## 📁 Estructura del repositorio
@@ -328,6 +356,26 @@ Sistema-Bano-Domotico/
 - Una cuenta en [Groq](https://console.groq.com/) para obtener una API key gratuita (se usa para interpretar comandos y transcribir voz)
 - Un ESP32 con los componentes: LED RGB, sensor DHT11, micro-servo, módulo de bomba
 - Arduino IDE (o PlatformIO) con las librerías: `DHT sensor library`, `ESP32Servo`, `PubSubClient`
+
+### 📚 Para qué sirve cada librería
+
+**Lado ESP32 (Arduino/C++)** — se instalan desde el Gestor de Librerías del Arduino IDE:
+
+| Librería | Para qué se usa aquí |
+|---|---|
+| `WiFi.h` | Viene incluida con el core de ESP32 (no se instala aparte). Permite conectar el microcontrolador a una red WiFi (`conectarWiFi()`, `gestionarWiFi()`) |
+| `PubSubClient` | Cliente MQTT ligero para Arduino/ESP32: publica comandos de estado (`mqttClient.publish`) y se suscribe al topic de comandos (`mqttClient.subscribe`) para recibir órdenes desde `bano_core.py` |
+| `DHT sensor library` (de Adafruit) | Lee temperatura y humedad del sensor DHT11 conectado al `DHT_PIN` — sin ella tocaría implementar a mano el protocolo de comunicación del sensor, que es bastante delicado con los tiempos |
+| `ESP32Servo` | Controla el servomotor de la persiana (`persiana.write(0)` / `persiana.write(90)`). Es una versión adaptada de la librería `Servo` estándar de Arduino, porque el ESP32 genera las señales PWM de forma distinta a un Arduino Uno normal |
+
+**Lado PC (Python)** — se instalan con `pip install -r requirements.txt`:
+
+| Librería | Para qué se usa aquí |
+|---|---|
+| `flask` | Framework web que levanta el servidor (`app.py`), define las rutas (`/api/comando`, `/api/estado`, etc.) y sirve `templates/index.html` al celular |
+| `pyopenssl` | Le permite a Flask generar el certificado HTTPS autofirmado (`ssl_context="adhoc"`), necesario para que el navegador del celular autorice el uso del micrófono |
+| `paho-mqtt` | Cliente MQTT para Python (equivalente a `PubSubClient` pero del lado de la PC): conecta con el broker, publica comandos hacia el ESP32 y escucha su topic de estado (`bano_core.py`) |
+| `requests` | Hace las llamadas HTTP a la API de Groq: tanto para interpretar texto (`interpretar_mensaje`) como para transcribir audio con Whisper (`transcribir_audio`) |
 
 ---
 
