@@ -1,8 +1,10 @@
 <div align="center">
 
-# 🛁 Baño Domótico Inteligente
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:2563eb,100:0891b2&height=180&section=header&text=Baño%20Domótico%20Inteligente&fontSize=38&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Control%20por%20voz%20y%20texto,%20con%20IA%20e%20IoT&descAlignY=58&descSize=18" width="100%" alt="Banner"/>
 
-### Control de iluminación, ducha y persiana por voz o texto, con IA e IoT
+<a href="https://git.io/typing-svg">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=20&pause=1200&color=FFFF&center=true&vCenter=true&width=560&lines=%22enciende+la+ducha+y+abre+la+persiana%22;%22quiero+dormir%22+%E2%86%92+modo+nocturno;%22apaga+la+luz%22+%E2%86%92+apagar+luces;Todo+por+voz%2C+texto+o+MQTT" alt="Typing SVG" />
+</a>
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![ESP32](https://img.shields.io/badge/ESP32-Microcontrolador-E7352C?style=for-the-badge&logo=espressif&logoColor=white)](https://www.espressif.com/)
@@ -12,9 +14,9 @@
 
 **Universidad Militar Nueva Granada** · Ingeniería Mecatrónica
 
-</div>
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.gif" width="100%">
 
----
+</div>
 
 ## 📸 Vista previa
 
@@ -45,11 +47,10 @@
 </table>
 
 <div align="center">
-  <img src="docs/imagenes/demo.gif" alt="Demo funcionando" width="60%"><br>
+  <img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.gif" width="100%">
   <sub><b>Demo:</b> comando de voz → interpretación → acción en el ESP32</sub>
 </div>
 
----
 
 ## 📖 Descripción
 
@@ -59,7 +60,7 @@ Se puede controlar desde:
 - 🖥️ Una **consola de PC** (`chatbot_bano.py`)
 - 📱 El **navegador del celular**, con un dashboard táctil y botón de micrófono (`app.py` + `templates/index.html`)
 
----
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.gif" width="100%">
 
 ## 📑 Tabla de contenido
 
@@ -78,7 +79,7 @@ Se puede controlar desde:
 - [Nota de seguridad](#-nota-de-seguridad)
 - [Autor](#-autor)
 
----
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.gif" width="100%">
 
 ## 📚 Conceptos clave (para entender el proyecto)
 
@@ -253,7 +254,7 @@ El `index.html` usa varias funciones nativas del navegador (sin frameworks exter
 | `localStorage` | Recordar si el usuario dejó activada o desactivada la voz, incluso si cierra la página |
 | `setInterval` | Refrescar el dashboard cada 5s y pedir sensores nuevos cada 20s automáticamente |
 
----
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.gif" width="100%">
 
 ## 🏗 Arquitectura general
 
@@ -313,7 +314,7 @@ En resumen: **nada habla directo con el ESP32**. Todo pasa por dos intermediario
 | **Desacoplamiento (pub/sub)**: PC y ESP32 nunca necesitan estar activos al mismo tiempo exactamente — el broker guarda el mensaje el tiempo suficiente para que el otro lado lo recoja, a diferencia de una conexión directa que exige que ambos estén "en línea" en el mismo instante. | **Costos ocultos en producción**: aunque Groq es gratuito ahora mismo para uso moderado, un LLM y un modelo de transcripción de voz son mucho más caros de operar (y de escalar) que simplemente comparar strings de texto con un `if`, si el proyecto creciera a muchos usuarios. |
 | **Fácil de extender a más interfaces**: como toda la lógica vive fuera de `chatbot_bano.py` y `app.py`, se podría agregar una tercera interfaz (por ejemplo un bot de Telegram) reusando `bano_core.py` casi sin cambios. | **Superficie de fallo más grande**: hay más piezas que pueden fallar de forma independiente (WiFi del ESP32, broker, API de Groq, certificado HTTPS, micrófono del navegador) comparado con un sistema simple de botones físicos o una app que hable directo por Bluetooth con el ESP32. |
 
----
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.gif" width="100%">
 
 ## 📁 Estructura del repositorio
 
@@ -332,7 +333,7 @@ Sistema-Bano-Domotico/
 └── README.md
 ```
 
----
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.gif" width="100%">
 
 ## ✨ Características
 
@@ -348,7 +349,7 @@ Sistema-Bano-Domotico/
 | 🔊 **Respuesta por voz** | El navegador confirma en voz alta cada acción (Text-to-Speech) |
 | 📶 **Reconexión automática** | WiFi y MQTT se reconectan solos sin bloquear el sistema |
 
----
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.gif" width="100%">
 
 ## ⚙️ Requisitos
 
@@ -377,7 +378,7 @@ Sistema-Bano-Domotico/
 | `paho-mqtt` | Cliente MQTT para Python (equivalente a `PubSubClient` pero del lado de la PC): conecta con el broker, publica comandos hacia el ESP32 y escucha su topic de estado (`bano_core.py`) |
 | `requests` | Hace las llamadas HTTP a la API de Groq: tanto para interpretar texto (`interpretar_mensaje`) como para transcribir audio con Whisper (`transcribir_audio`) |
 
----
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.gif" width="100%">
 
 ## 📥 Instalación
 
@@ -397,7 +398,7 @@ $env:GROQ_API_KEY = "tu_api_key_aqui"
 set GROQ_API_KEY=tu_api_key_aqui
 ```
 
----
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.gif" width="100%">
 
 ## ▶️ Cómo correrlo
 
@@ -412,7 +413,7 @@ python app.py
 ```
 Te dará una URL tipo `https://<IP-de-tu-PC>:5000` para abrir desde el navegador del celular. El certificado será autofirmado (aparece una advertencia, es normal — es tu propio servidor).
 
----
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.gif" width="100%">
 
 ## 🧩 Explicación del código, bloque por bloque
 
@@ -477,7 +478,7 @@ Dashboard visual con tarjetas para los 3 modos de luz, toggles de ducha/persiana
 
 Maneja reconexión de WiFi y MQTT no bloqueante, iluminación con un LED RGB (`analogWrite`) para los modos diurno/nocturno/sauna y para el estado apagado, la ducha con una bomba (`PUMP_PIN`), la persiana con servomotor, lectura periódica del sensor DHT11, y el procesamiento de comandos recibidos tanto por MQTT como por el monitor serial (útil para pruebas sin depender del WiFi). El sistema **arranca con las luces apagadas** en vez de en un modo por defecto.
 
----
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.gif" width="100%">
 
 ## 🎛 Comandos disponibles
 
@@ -497,13 +498,13 @@ Maneja reconexión de WiFi y MQTT no bloqueante, iluminación con un LED RGB (`a
 
 > 💡 También puedes combinar varios en un solo mensaje: *"enciende la ducha y abre la persiana"*.
 
----
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.gif" width="100%">
 
 ## 🔒 Nota de seguridad
 
 `broker.hivemq.com` es un broker MQTT **público y sin autenticación**. Cualquiera que conozca el prefijo de topic (`unimilitar_duchainteligente_hearvl2026`) podría enviar comandos al sistema. Para un proyecto académico de demostración esto es aceptable, pero para un uso real se recomendaría un broker privado con usuario/contraseña o TLS.
 
----
+<img src="https://raw.githubusercontent.com/andreasbm/readme/master/assets/lines/rainbow.gif" width="100%">
 
 ## 👤 Autor
 
@@ -511,4 +512,11 @@ Proyecto desarrollado por **Julián** — Ingeniería Mecatrónica, Universidad 
 
 <div align="center">
 <sub>Hecho con 🛁, ESP32 y un poco de IA</sub>
+
+<br><br>
+
+[![Volver arriba](https://img.shields.io/badge/⬆-Volver%20arriba-2563eb?style=for-the-badge)](#-baño-domótico-inteligente)
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0891b2,100:2563eb&height=100&section=footer" width="100%"/>
+
 </div>
