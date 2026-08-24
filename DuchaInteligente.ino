@@ -30,29 +30,20 @@ PubSubClient mqttClient(espClient);
 // PINES
 // =====================================================
 
-// ---------- ILUMINACIÓN DIURNA ----------
-#define LED_BLANCO_1 25
-#define LED_BLANCO_2 26
-#define LED_BLANCO_3 27
+// ---------- LED RGB (ILUMINACIÓN: diurno / nocturno / sauna) ----------
+#define LED_R_PIN 25
+#define LED_G_PIN 26
+#define LED_B_PIN 27
 
-// ---------- ILUMINACIÓN NOCTURNA ----------
-#define LED_NOCHE_1 14
-#define LED_NOCHE_2 16
+// ---------- BOMBA (DUCHA) ----------
+#define PUMP_PIN 18
 
-// ---------- ILUMINACIÓN SAUNA ----------
-#define LED_SAUNA_1 32
-#define LED_SAUNA_2 33
-
-// ---------- DUCHA ----------
-#define LED_DUCHA_1 18
-#define LED_DUCHA_2 19
+// ---------- SERVO (PERSIANA) ----------
+#define SERVO_PIN 13
 
 // ---------- DHT11 ----------
 #define DHT_PIN 4
 #define DHT_TYPE DHT11
-
-// ---------- SERVO ----------
-#define SERVO_PIN 13
 
 
 // =====================================================
@@ -145,10 +136,6 @@ void conectarWiFi() {
 
 // =====================================================
 // RECONEXIÓN WIFI (no bloqueante)
-// Se llama en cada vuelta del loop(). Si el WiFi se cae
-// (router se reinicia, señal débil, corte del ISP, etc.),
-// esto reintenta conectar sin congelar el resto del sistema
-// ni bombardear el router con intentos constantes.
 // =====================================================
 
 void gestionarWiFi() {
@@ -161,7 +148,6 @@ void gestionarWiFi() {
     return;
   }
 
-  // Se perdió la conexión
   if (wifiConectadoAnteriormente) {
     wifiConectadoAnteriormente = false;
     Serial.println("Se perdió la conexión WiFi. Intentando reconectar...");
@@ -178,19 +164,15 @@ void gestionarWiFi() {
 
 
 // =====================================================
-// APAGAR TODAS LAS LUCES AMBIENTALES
+// LED RGB
+// =====================================================
+// Cátodo común: HIGH/valor alto = encendido
 // =====================================================
 
-void apagarLuces() {
-  digitalWrite(LED_BLANCO_1, LOW);
-  digitalWrite(LED_BLANCO_2, LOW);
-  digitalWrite(LED_BLANCO_3, LOW);
-
-  digitalWrite(LED_NOCHE_1, LOW);
-  digitalWrite(LED_NOCHE_2, LOW);
-
-  digitalWrite(LED_SAUNA_1, LOW);
-  digitalWrite(LED_SAUNA_2, LOW);
+void setRGB(int rojo, int verde, int azul) {
+  analogWrite(LED_R_PIN, rojo);
+  analogWrite(LED_G_PIN, verde);
+  analogWrite(LED_B_PIN, azul);
 }
 
 
@@ -199,11 +181,7 @@ void apagarLuces() {
 // =====================================================
 
 void modoDiurno() {
-  apagarLuces();
-
-  digitalWrite(LED_BLANCO_1, HIGH);
-  digitalWrite(LED_BLANCO_2, HIGH);
-  digitalWrite(LED_BLANCO_3, HIGH);
+  setRGB(255, 255, 255);
 
   Serial.println("Modo DIURNO activado");
   mqttClient.publish(TOPIC_ESTADO, "Modo DIURNO activado");
@@ -215,10 +193,7 @@ void modoDiurno() {
 // =====================================================
 
 void modoNocturno() {
-  apagarLuces();
-
-  digitalWrite(LED_NOCHE_1, HIGH);
-  digitalWrite(LED_NOCHE_2, HIGH);
+  setRGB(0, 0, 70);
 
   Serial.println("Modo NOCTURNO activado");
   mqttClient.publish(TOPIC_ESTADO, "Modo NOCTURNO activado");
@@ -230,10 +205,7 @@ void modoNocturno() {
 // =====================================================
 
 void modoSauna() {
-  apagarLuces();
-
-  digitalWrite(LED_SAUNA_1, HIGH);
-  digitalWrite(LED_SAUNA_2, HIGH);
+  setRGB(255, 45, 0);
 
   Serial.println("Modo SAUNA activado");
   mqttClient.publish(TOPIC_ESTADO, "Modo SAUNA activado");
@@ -245,8 +217,7 @@ void modoSauna() {
 // =====================================================
 
 void encenderDucha() {
-  digitalWrite(LED_DUCHA_1, HIGH);
-  digitalWrite(LED_DUCHA_2, HIGH);
+  digitalWrite(PUMP_PIN, HIGH);
 
   Serial.println("Ducha ENCENDIDA");
   mqttClient.publish(TOPIC_ESTADO, "Ducha ENCENDIDA");
@@ -254,8 +225,7 @@ void encenderDucha() {
 
 
 void apagarDucha() {
-  digitalWrite(LED_DUCHA_1, LOW);
-  digitalWrite(LED_DUCHA_2, LOW);
+  digitalWrite(PUMP_PIN, LOW);
 
   Serial.println("Ducha APAGADA");
   mqttClient.publish(TOPIC_ESTADO, "Ducha APAGADA");
@@ -265,19 +235,23 @@ void apagarDucha() {
 // =====================================================
 // PERSIANA
 // =====================================================
-// 165° = posición abierta
-// 75°  = posición cerrada
+// 90° = posición abierta
+// 0°  = posición cerrada
 // =====================================================
 
 void abrirPersiana() {
-  persiana.write(165);
+  persiana.write(90);
+  delay(500);
+
   Serial.println("Persiana ABIERTA");
   mqttClient.publish(TOPIC_ESTADO, "Persiana ABIERTA");
 }
 
 
 void cerrarPersiana() {
-  persiana.write(75);
+  persiana.write(0);
+  delay(500);
+
   Serial.println("Persiana CERRADA");
   mqttClient.publish(TOPIC_ESTADO, "Persiana CERRADA");
 }
@@ -319,7 +293,7 @@ void leerDHT11() {
 
 // =====================================================
 // PROCESAMIENTO DE COMANDOS
-// (misma lógica original, ahora alimentada por MQTT o Serial)
+// (alimentado por MQTT o Serial)
 // =====================================================
 
 void procesarComando(String comando) {
@@ -374,7 +348,6 @@ void procesarComando(String comando) {
 
 // =====================================================
 // CALLBACK MQTT
-// Se ejecuta cada vez que llega un mensaje al topic suscrito
 // =====================================================
 
 void callbackMQTT(char* topic, byte* payload, unsigned int length) {
@@ -401,7 +374,6 @@ void reconectarMQTT() {
   while (!mqttClient.connected() && WiFi.status() == WL_CONNECTED) {
     Serial.print("Conectando a MQTT...");
 
-    // ID de cliente único (evita colisiones con otros dispositivos)
     String clientId = "ESP32DuchaInteligente-" + String(random(0xffff), HEX);
 
     if (mqttClient.connect(clientId.c_str())) {
@@ -428,28 +400,19 @@ void setup() {
   Serial.begin(115200);
 
   // ---------------------------------------------------
-  // CONFIGURAR LEDs
+  // LED RGB
   // ---------------------------------------------------
 
-  pinMode(LED_BLANCO_1, OUTPUT);
-  pinMode(LED_BLANCO_2, OUTPUT);
-  pinMode(LED_BLANCO_3, OUTPUT);
-
-  pinMode(LED_NOCHE_1, OUTPUT);
-  pinMode(LED_NOCHE_2, OUTPUT);
-
-  pinMode(LED_SAUNA_1, OUTPUT);
-  pinMode(LED_SAUNA_2, OUTPUT);
-
-  pinMode(LED_DUCHA_1, OUTPUT);
-  pinMode(LED_DUCHA_2, OUTPUT);
+  pinMode(LED_R_PIN, OUTPUT);
+  pinMode(LED_G_PIN, OUTPUT);
+  pinMode(LED_B_PIN, OUTPUT);
 
   // ---------------------------------------------------
-  // ESTADO INICIAL
+  // BOMBA (DUCHA)
   // ---------------------------------------------------
 
-  apagarLuces();
-  apagarDucha();
+  pinMode(PUMP_PIN, OUTPUT);
+  digitalWrite(PUMP_PIN, LOW);
 
   // ---------------------------------------------------
   // DHT11
@@ -463,7 +426,7 @@ void setup() {
 
   persiana.setPeriodHertz(50);
   persiana.attach(SERVO_PIN, 500, 2400);
-  persiana.write(75);  // Inicia cerrada
+  persiana.write(0);  // Inicia cerrada
 
   // ---------------------------------------------------
   // WIFI Y MQTT
