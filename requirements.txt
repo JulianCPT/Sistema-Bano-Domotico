@@ -1,4 +1,4 @@
-flask
-pyopenssl
-paho-mqtt
-requests
+flask        # Servidor web de app.py (rutas, render_template, jsonify)
+pyopenssl    # Necesario para el HTTPS autofirmado (ssl_context="adhoc" en app.py)
+paho-mqtt    # Cliente MQTT usado en bano_core.py para hablar con el ESP32
+requests     # Llamadas a la API de Groq (interpretar texto y transcribir voz)
