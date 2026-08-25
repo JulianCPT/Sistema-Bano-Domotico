@@ -53,38 +53,31 @@ sin recortar, están en [`assets/video/`](assets/video/):*
 En las tres fotos también se ve el sensor DHT11, el servomotor de la
 persiana y las "cortinas" de la ducha, todo conectado al ESP32.
 
+### Las dos interfaces de control
+
+| Consola (`chatbot_bano.py`) | Dashboard móvil (`app.py` + `index.html`) |
+|---|---|
+| ![Consola del chatbot](assets/img/captura-consola-chatbot.png) | ![Dashboard móvil](assets/img/captura-dashboard-movil.png) |
+
+- **Consola:** cada línea que escribe el usuario se interpreta con Groq y
+  se muestra la lista de comandos detectados antes de enviarlos al ESP32
+  (ej. *"Tengo sueño y abre la ducha"* → `['nocturno', 'encender ducha']`).
+- **Dashboard móvil:** mismo backend, pero desde el navegador del celular,
+  con tarjetas táctiles para cada modo/función y el botón de micrófono para
+  dar comandos por voz.
+
 ---
 
 ## 📐 Arquitectura general
 
-```
-[Usuario habla o escribe]
-        │
-        ▼
-┌─────────────────────┐        ┌───────────────────┐
-│  chatbot_bano.py     │        │      app.py        │
-│  (consola)           │        │  (servidor Flask)  │
-└──────────┬───────────┘        └─────────┬─────────┘
-           │                              │
-           └──────────────┬───────────────┘
-                          ▼
-                  ┌───────────────┐
-                  │  bano_core.py  │   <- lógica compartida
-                  └───────┬───────┘
-                          │
-              ┌───────────┴───────────┐
-              ▼                       ▼
-      API Groq (interpreta       Broker MQTT público
-      texto/voz → comando)       (broker.hivemq.com)
-                                        │
-                                        ▼
-                              ┌──────────────────┐
-                              │   ESP32           │
-                              │ DuchaInteligente.ino│
-                              └──────────────────┘
-                                        │
-                         LEDs, servo (persiana), sensor DHT11
-```
+![Diagrama de arquitectura: usuario, interfaces, bano_core.py, Groq, MQTT y ESP32](assets/img/diagrama-arquitectura.svg)
+
+- **Línea continua:** el camino que sigue un comando (usuario → interfaz →
+  `bano_core.py` → Groq lo interpreta → se publica en MQTT → el ESP32 lo
+  ejecuta).
+- **Línea punteada:** el camino de vuelta del estado (el ESP32 reporta modo
+  de luz, ducha, persiana, temperatura y humedad por MQTT, y eso alimenta
+  el dashboard).
 
 **Idea clave:** toda la lógica de conexión MQTT y de interpretación de
 lenguaje natural vive en un solo archivo (`bano_core.py`) para no
