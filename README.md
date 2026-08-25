@@ -132,14 +132,14 @@ Instalación de dependencias de Python:
 pip install -r requirements.txt
 ```
 
-### 📦 ¿Para qué sirve cada librería?
+### 📦 Librerías de Python: qué hacen y por qué se eligieron
 
-| Librería | Para qué sirve | Dónde se usa |
-|---|---|---|
-| **Flask** | Framework web minimalista: levanta el servidor, sirve `index.html` y expone las rutas `/api/comando`, `/api/comando-voz`, `/api/estado`, `/api/refrescar` | `app.py` |
-| **paho-mqtt** | Cliente MQTT en Python: conecta al broker, se suscribe al topic de estado y publica los comandos que debe ejecutar el ESP32 | `bano_core.py` |
-| **requests** | Hace las peticiones HTTP a la API de Groq: tanto para interpretar texto (chat completions) como para transcribir audio (Whisper) | `bano_core.py` |
-| **pyOpenSSL** | Le permite a Flask generar un certificado HTTPS autofirmado al vuelo (`ssl_context="adhoc"`); sin HTTPS el navegador del celular no da permiso de micrófono | `app.py` |
+| Librería | Para qué sirve | Dónde se usa | Por qué esta y no otra |
+|---|---|---|---|
+| **Flask** | Framework web minimalista: levanta el servidor, sirve `index.html` y expone las rutas `/api/comando`, `/api/comando-voz`, `/api/estado`, `/api/refrescar` | `app.py` | Solo se necesitan 5 rutas simples; un framework más grande como Django traería un ORM, sistema de admin, etc. que aquí no se usan para nada. Flask además trae de fábrica el modo `ssl_context="adhoc"` para HTTPS autofirmado, justo lo que se necesita para el micrófono |
+| **paho-mqtt** | Cliente MQTT en Python: conecta al broker, se suscribe al topic de estado y publica los comandos que debe ejecutar el ESP32 | `bano_core.py` | Es la librería MQTT más madura y usada en Python (mantenida por la Eclipse Foundation). Trae reconexión automática (`reconnect_delay_set`) y un modelo de callbacks (`on_connect`, `on_message`) que encaja bien con el patrón "reacciona cuando llega un mensaje" |
+| **requests** | Hace las peticiones HTTP a la API de Groq: tanto para interpretar texto (chat completions) como para transcribir audio (Whisper) | `bano_core.py` | Las llamadas a Groq se hacen una a la vez y se puede esperar la respuesta bloqueando (ya hay reintentos con backoff exponencial en el propio código); no hace falta la complejidad de una librería asíncrona como `aiohttp` para este caso de uso |
+| **pyOpenSSL** | Le permite a Flask generar un certificado HTTPS autofirmado al vuelo (`ssl_context="adhoc"`) | `app.py` | Sin HTTPS, el navegador del celular no da permiso de micrófono (`getUserMedia`). pyOpenSSL es lo que Werkzeug necesita por debajo para crear ese certificado en memoria, sin tener que generar manualmente archivos `.pem` con `openssl` desde la terminal |
 
 `requirements.txt` ya trae estos mismos comentarios junto a cada versión,
 por si prefieres leerlos directamente ahí en vez de en esta tabla:
@@ -150,6 +150,26 @@ paho-mqtt>=2.1       # cliente MQTT: conecta al broker y publica/recibe comandos
 requests>=2.31       # llamadas HTTP a la API de Groq: texto y transcripción de voz (bano_core.py)
 pyopenssl>=24.0      # certificado HTTPS autofirmado para poder usar el micrófono del celular (app.py)
 ```
+
+### 🔩 Hardware y librerías de Arduino (firmware del ESP32)
+
+**Componentes físicos — qué son y por qué se eligieron:**
+
+| Componente | Qué es | Por qué se eligió |
+|---|---|---|
+| **ESP32** | Microcontrolador con WiFi y Bluetooth integrados, doble núcleo, suficientes pines GPIO | Se necesitaba WiFi nativo para hablar MQTT sin módulos externos (a diferencia de un Arduino Uno normal, que necesitaría un shield WiFi aparte), y pines de sobra para LEDs, servo y sensor al mismo tiempo |
+| **Sensor DHT11** | Sensor digital de temperatura y humedad, económico y de un solo cable de datos | Da una lectura "ambiente" de temperatura/humedad del baño, suficiente para el alcance de un proyecto académico; no se necesita la precisión (ni el costo) de un sensor industrial como el DHT22 o un SHT31 |
+| **Servomotor** | Motor que gira a un ángulo específico y se mantiene ahí | Ideal para la persiana porque solo tiene 2 posiciones fijas (abierta = 165°, cerrada = 75°); un motor DC continuo necesitaría además un sistema de control de posición aparte |
+| **LEDs** (blancos, azules, cálidos) | Indicadores simples de encendido/apagado por color | Representan los 3 modos de iluminación (diurno/nocturno/sauna) sin la complejidad de una tira LED direccionable (WS2812/NeoPixel), que necesitaría su propia librería y protocolo de datos |
+
+**Librerías del firmware (`DuchaInteligente.ino`) — para qué sirven y por qué se usaron:**
+
+| Librería | Para qué sirve | Por qué se usó |
+|---|---|---|
+| `WiFi.h` | Incluida en el core de ESP32 de Espressif; maneja la conexión WiFi en modo estación (STA), el escaneo de redes y la reconexión | Es la librería oficial del fabricante, ya viene con el soporte de placas ESP32 — no se necesita nada externo para conectar a la red |
+| `PubSubClient` | Cliente MQTT ligero pensado para microcontroladores con poca memoria | Es el estándar de facto para hablar MQTT desde Arduino/ESP32: API simple (`connect`, `subscribe`, `publish`, `setCallback`) y bajo consumo de RAM, algo importante en un micro con memoria limitada |
+| `DHT sensor library` (Adafruit) | Lee la temperatura y humedad del sensor DHT11 | Abstrae el protocolo de un solo cable (single-wire) del DHT11, que si se implementara a mano requeriría manejar manualmente timings de microsegundos para leer cada bit |
+| `ESP32Servo` | Controla servomotores desde el ESP32 usando PWM por hardware (periférico LEDC) | La librería `Servo.h` estándar de Arduino no es compatible con el ESP32 (usa un manejo de PWM distinto al de un AVR normal); `ESP32Servo` sí está adaptada específicamente a su hardware |
 
 Definir la API key de Groq como variable de entorno antes de correr
 cualquiera de los dos programas:
