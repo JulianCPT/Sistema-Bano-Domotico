@@ -1,87 +1,80 @@
-<svg viewBox="0 0 920 760" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<svg viewBox="0 0 960 780" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Helvetica, Arial, sans-serif">
 
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="#334155"/>
     </marker>
-    <marker id="arrowDashed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
-    </marker>
   </defs>
 
-  <rect x="0" y="0" width="920" height="760" fill="#ffffff"/>
+  <rect x="0" y="0" width="960" height="780" fill="#ffffff"/>
 
   <!-- ===================== USUARIO ===================== -->
-  <rect x="340" y="18" width="240" height="58" rx="14" fill="#f1f5f9" stroke="#334155" stroke-width="1.5"/>
-  <text x="460" y="42" text-anchor="middle" font-size="15" font-weight="600" fill="#0f172a">🧑 Usuario</text>
-  <text x="460" y="62" text-anchor="middle" font-size="12.5" fill="#475569">habla o escribe un comando</text>
+  <rect x="370" y="18" width="240" height="58" rx="14" fill="#f1f5f9" stroke="#334155" stroke-width="1.5"/>
+  <text x="490" y="42" text-anchor="middle" font-size="15" font-weight="700" fill="#0f172a">🧑 Usuario</text>
+  <text x="490" y="62" text-anchor="middle" font-size="12.5" fill="#475569">habla o escribe un comando</text>
 
-  <!-- Flechas usuario -> las dos interfaces -->
-  <path d="M420,76 L260,120" stroke="#334155" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
-  <path d="M500,76 L660,120" stroke="#334155" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+  <!-- Flechas usuario -> las dos interfaces (forma de V, sin cruzarse) -->
+  <path d="M430,76 L260,120" stroke="#334155" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+  <path d="M550,76 L760,120" stroke="#334155" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
 
   <!-- ===================== INTERFACES ===================== -->
-  <rect x="70" y="122" width="320" height="72" rx="14" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
-  <text x="230" y="152" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a" font-family="Consolas, monospace">chatbot_bano.py</text>
-  <text x="230" y="172" text-anchor="middle" font-size="12.5" fill="#1e40af">interfaz de consola (PC)</text>
+  <rect x="60" y="122" width="320" height="72" rx="14" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
+  <text x="220" y="152" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a" font-family="Consolas, monospace">chatbot_bano.py</text>
+  <text x="220" y="172" text-anchor="middle" font-size="12.5" fill="#1e40af">interfaz de consola (PC)</text>
 
-  <rect x="530" y="122" width="320" height="72" rx="14" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
-  <text x="690" y="152" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a" font-family="Consolas, monospace">app.py</text>
-  <text x="690" y="172" text-anchor="middle" font-size="12.5" fill="#1e40af">servidor Flask + dashboard móvil</text>
+  <rect x="600" y="122" width="320" height="72" rx="14" fill="#dbeafe" stroke="#2563eb" stroke-width="1.6"/>
+  <text x="760" y="152" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a" font-family="Consolas, monospace">app.py</text>
+  <text x="760" y="172" text-anchor="middle" font-size="12.5" fill="#1e40af">servidor Flask + dashboard móvil</text>
 
-  <!-- Flechas interfaces -> bano_core -->
-  <path d="M260,194 L400,244" stroke="#334155" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
-  <path d="M660,194 L520,244" stroke="#334155" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+  <!-- Flechas interfaces -> bano_core (forma de V invertida, convergen sin cruzarse) -->
+  <path d="M260,194 L420,246" stroke="#334155" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+  <path d="M760,194 L560,246" stroke="#334155" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
 
   <!-- ===================== BANO_CORE (nucleo) ===================== -->
-  <rect x="260" y="246" width="400" height="86" rx="16" fill="#1e3a8a" stroke="#1e293b" stroke-width="1.6"/>
-  <text x="460" y="280" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff" font-family="Consolas, monospace">bano_core.py</text>
-  <text x="460" y="300" text-anchor="middle" font-size="12.5" fill="#dbeafe">lógica compartida: MQTT · Groq · Whisper</text>
-  <text x="460" y="318" text-anchor="middle" font-size="11.5" fill="#bfdbfe">(evita duplicar código entre consola y web)</text>
+  <rect x="260" y="248" width="460" height="84" rx="16" fill="#1e3a8a" stroke="#1e293b" stroke-width="1.6"/>
+  <text x="490" y="282" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff" font-family="Consolas, monospace">bano_core.py</text>
+  <text x="490" y="302" text-anchor="middle" font-size="12.5" fill="#dbeafe">lógica compartida: MQTT · Groq · Whisper</text>
+  <text x="490" y="320" text-anchor="middle" font-size="11.5" fill="#bfdbfe">(evita duplicar código entre consola y web)</text>
 
-  <!-- Flechas core -> groq / mqtt -->
-  <path d="M340,332 L160,388" stroke="#334155" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
-  <path d="M580,332 L760,388" stroke="#334155" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+  <!-- Flecha core -> Groq (rama única hacia la izquierda, no continúa hacia abajo) -->
+  <path d="M300,332 L250,388" stroke="#334155" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
 
-  <!-- ===================== GROQ ===================== -->
-  <rect x="30" y="390" width="290" height="86" rx="14" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.6"/>
-  <text x="175" y="418" text-anchor="middle" font-size="14" font-weight="700" fill="#4c1d95">☁️ API Groq</text>
-  <text x="175" y="438" text-anchor="middle" font-size="12" fill="#5b21b6">LLM: interpreta texto → comando</text>
-  <text x="175" y="456" text-anchor="middle" font-size="12" fill="#5b21b6">Whisper: transcribe audio → texto</text>
+  <!-- Flecha core -> MQTT (tronco central recto, bidireccional) -->
+  <path d="M490,332 L490,388" stroke="#334155" stroke-width="1.8" fill="none" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
 
-  <!-- ===================== MQTT BROKER ===================== -->
-  <rect x="600" y="390" width="290" height="86" rx="14" fill="#dcfce7" stroke="#16a34a" stroke-width="1.6"/>
-  <text x="745" y="418" text-anchor="middle" font-size="14" font-weight="700" fill="#14532d">📡 Broker MQTT</text>
-  <text x="745" y="438" text-anchor="middle" font-size="12" fill="#166534" font-family="Consolas, monospace">broker.hivemq.com</text>
-  <text x="745" y="456" text-anchor="middle" font-size="11.5" fill="#166534">público — topic con prefijo único</text>
+  <!-- ===================== GROQ (rama, sin continuación) ===================== -->
+  <rect x="20" y="390" width="290" height="86" rx="14" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.6"/>
+  <text x="165" y="418" text-anchor="middle" font-size="14" font-weight="700" fill="#4c1d95">☁️ API Groq</text>
+  <text x="165" y="438" text-anchor="middle" font-size="12" fill="#5b21b6">LLM: interpreta texto → comando</text>
+  <text x="165" y="456" text-anchor="middle" font-size="12" fill="#5b21b6">Whisper: transcribe audio → texto</text>
 
-  <!-- Flecha comando: broker -> esp32 -->
-  <path d="M745,476 L745,528" stroke="#334155" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
-  <text x="815" y="505" text-anchor="middle" font-size="11" fill="#334155">comando</text>
+  <!-- ===================== MQTT BROKER (tronco central) ===================== -->
+  <rect x="340" y="390" width="300" height="86" rx="14" fill="#dcfce7" stroke="#16a34a" stroke-width="1.6"/>
+  <text x="490" y="418" text-anchor="middle" font-size="14" font-weight="700" fill="#14532d">📡 Broker MQTT</text>
+  <text x="490" y="438" text-anchor="middle" font-size="12" fill="#166534" font-family="Consolas, monospace">broker.hivemq.com</text>
+  <text x="490" y="456" text-anchor="middle" font-size="11.5" fill="#166534">público — topic con prefijo único</text>
 
-  <!-- Flecha estado (dashed): esp32 -> broker -->
-  <path d="M690,528 L690,476" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="5,4" fill="none" marker-end="url(#arrowDashed)"/>
-  <text x="627" y="505" text-anchor="middle" font-size="11" fill="#64748b">estado</text>
+  <!-- Flecha MQTT -> ESP32 (tronco central recto, bidireccional) -->
+  <path d="M490,476 L490,532" stroke="#334155" stroke-width="1.8" fill="none" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="560" y="510" text-anchor="middle" font-size="11" fill="#64748b">comando ↓ / estado ↑</text>
 
-  <!-- Flecha estado (dashed): broker -> bano_core, ruta larga por la izquierda -->
-  <path d="M600,410 C 480,410 480,332 480,332" stroke="#94a3b8" stroke-width="1.3" stroke-dasharray="5,4" fill="none" marker-end="url(#arrowDashed)"/>
+  <!-- ===================== ESP32 (tronco central) ===================== -->
+  <rect x="340" y="534" width="300" height="72" rx="14" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.6"/>
+  <text x="490" y="562" text-anchor="middle" font-size="14" font-weight="700" fill="#075985">🔌 ESP32</text>
+  <text x="490" y="582" text-anchor="middle" font-size="12" fill="#0369a1" font-family="Consolas, monospace">DuchaInteligente.ino</text>
 
-  <!-- ===================== ESP32 ===================== -->
-  <rect x="600" y="530" width="290" height="72" rx="14" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.6"/>
-  <text x="745" y="558" text-anchor="middle" font-size="14" font-weight="700" fill="#075985">🔌 ESP32</text>
-  <text x="745" y="578" text-anchor="middle" font-size="12" fill="#0369a1" font-family="Consolas, monospace">DuchaInteligente.ino</text>
-
-  <!-- Flecha esp32 -> actuadores -->
-  <path d="M745,602 L745,646" stroke="#334155" stroke-width="1.6" fill="none" marker-end="url(#arrow)"/>
+  <!-- Flecha ESP32 -> actuadores/sensor (tronco central recto, un solo sentido) -->
+  <path d="M490,606 L490,650" stroke="#334155" stroke-width="1.8" fill="none" marker-end="url(#arrow)"/>
+  <text x="555" y="632" text-anchor="middle" font-size="11" fill="#64748b">controla / lee</text>
 
   <!-- ===================== ACTUADORES / SENSOR ===================== -->
-  <rect x="560" y="648" width="370" height="86" rx="14" fill="#f8fafc" stroke="#475569" stroke-width="1.6"/>
-  <text x="745" y="676" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1e293b">💡 LEDs (diurno/nocturno/sauna)</text>
-  <text x="745" y="696" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1e293b">🚿 Ducha  ·  🪟 Servo (persiana)</text>
-  <text x="745" y="716" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1e293b">🌡️ Sensor DHT11 (temperatura/humedad)</text>
+  <rect x="300" y="652" width="380" height="94" rx="14" fill="#f8fafc" stroke="#475569" stroke-width="1.6"/>
+  <text x="490" y="680" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1e293b">💡 LEDs (diurno · nocturno · sauna)</text>
+  <text x="490" y="700" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1e293b">🚿 Ducha  ·  🪟 Servo (persiana)</text>
+  <text x="490" y="720" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1e293b">🌡️ Sensor DHT11 (temperatura / humedad)</text>
 
   <!-- Nota de leyenda -->
-  <text x="30" y="720" font-size="11.5" fill="#64748b">— línea continua: envío de comando</text>
-  <text x="30" y="738" font-size="11.5" fill="#64748b">┄┄ línea punteada: reporte de estado (temperatura, humedad, modo actual)</text>
+  <text x="20" y="762" font-size="11.5" fill="#64748b">→  una sola flecha: relación de un solo sentido</text>
+  <text x="20" y="778" font-size="11.5" fill="#64748b">↕  flecha en ambos extremos: canal bidireccional (comando de bajada, estado de subida)</text>
 
 </svg>

@@ -12,6 +12,17 @@ Se puede controlar desde:
 - El **navegador del celular**, con un dashboard táctil y botón de micrófono
   (`app.py` + `templates/index.html`)
 
+## 📑 Contenido
+
+1. [Demo y fotos del prototipo](#-demo-y-fotos-del-prototipo)
+2. [Arquitectura general](#-arquitectura-general)
+3. [Estructura del repositorio](#-estructura-del-repositorio)
+4. [Requisitos](#️-requisitos)
+5. [Cómo correrlo](#️-cómo-correrlo)
+6. [Explicación del código, bloque por bloque](#-explicación-del-código-bloque-por-bloque)
+7. [Nota de seguridad](#-nota-de-seguridad)
+8. [Autor](#-autor)
+
 ---
 
 ## 🎥 Demo y fotos del prototipo
@@ -72,12 +83,11 @@ persiana y las "cortinas" de la ducha, todo conectado al ESP32.
 
 ![Diagrama de arquitectura: usuario, interfaces, bano_core.py, Groq, MQTT y ESP32](assets/img/diagrama-arquitectura.svg)
 
-- **Línea continua:** el camino que sigue un comando (usuario → interfaz →
-  `bano_core.py` → Groq lo interpreta → se publica en MQTT → el ESP32 lo
-  ejecuta).
-- **Línea punteada:** el camino de vuelta del estado (el ESP32 reporta modo
-  de luz, ducha, persiana, temperatura y humedad por MQTT, y eso alimenta
-  el dashboard).
+- **→ una sola flecha:** relación de un solo sentido (ej. el ESP32 controla
+  los LEDs, pero los LEDs no le "contestan" nada).
+- **↕ flecha en ambos extremos:** canal bidireccional — el comando baja
+  (usuario → ESP32) y el estado sube (ESP32 → dashboard) por el mismo canal
+  MQTT.
 
 **Idea clave:** toda la lógica de conexión MQTT y de interpretación de
 lenguaje natural vive en un solo archivo (`bano_core.py`) para no
@@ -91,15 +101,15 @@ duplicarla entre la versión de consola y la versión web. Tanto
 
 ```
 Sistema-Bano-Domotico/
-├── app.py                  # Servidor Flask (control desde el celular)
-├── bano_core.py             # Lógica compartida: MQTT, Groq, Whisper
-├── chatbot_bano.py          # Chatbot de consola
-├── DuchaInteligente.ino      # Firmware del ESP32
+├── app.py                    # Servidor Flask (control desde el celular)
+├── bano_core.py               # Lógica compartida: MQTT, Groq, Whisper
+├── chatbot_bano.py            # Chatbot de consola
+├── DuchaInteligente.ino        # Firmware del ESP32
 ├── templates/
-│   └── index.html            # Interfaz móvil (HTML+CSS+JS)
+│   └── index.html              # Interfaz móvil (HTML+CSS+JS)
 ├── assets/
-│   ├── img/                  # Fotos del prototipo
-│   └── video/                # GIF y videos de demostración
+│   ├── img/                    # Fotos, capturas y diagrama de arquitectura
+│   └── video/                  # GIF y videos de demostración
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -120,6 +130,25 @@ Instalación de dependencias de Python:
 
 ```bash
 pip install -r requirements.txt
+```
+
+### 📦 ¿Para qué sirve cada librería?
+
+| Librería | Para qué sirve | Dónde se usa |
+|---|---|---|
+| **Flask** | Framework web minimalista: levanta el servidor, sirve `index.html` y expone las rutas `/api/comando`, `/api/comando-voz`, `/api/estado`, `/api/refrescar` | `app.py` |
+| **paho-mqtt** | Cliente MQTT en Python: conecta al broker, se suscribe al topic de estado y publica los comandos que debe ejecutar el ESP32 | `bano_core.py` |
+| **requests** | Hace las peticiones HTTP a la API de Groq: tanto para interpretar texto (chat completions) como para transcribir audio (Whisper) | `bano_core.py` |
+| **pyOpenSSL** | Le permite a Flask generar un certificado HTTPS autofirmado al vuelo (`ssl_context="adhoc"`); sin HTTPS el navegador del celular no da permiso de micrófono | `app.py` |
+
+`requirements.txt` ya trae estos mismos comentarios junto a cada versión,
+por si prefieres leerlos directamente ahí en vez de en esta tabla:
+
+```txt
+flask>=3.0          # servidor web + rutas /api/... (app.py)
+paho-mqtt>=2.1       # cliente MQTT: conecta al broker y publica/recibe comandos (bano_core.py)
+requests>=2.31       # llamadas HTTP a la API de Groq: texto y transcripción de voz (bano_core.py)
+pyopenssl>=24.0      # certificado HTTPS autofirmado para poder usar el micrófono del celular (app.py)
 ```
 
 Definir la API key de Groq como variable de entorno antes de correr
