@@ -1,8 +1,10 @@
 <div align="center">
 
-# 🛁 Sistema Baño Domótico
+<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:0072FF,100:00C6FF&height=200&section=header&text=Sistema%20Baño%20Domótico&fontSize=42&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Control%20inteligente%20por%20voz%20y%20texto%20con%20ESP32%2C%20MQTT%20y%20Groq&descAlignY=55&descSize=18" alt="Banner"/>
 
-### Control inteligente de un baño mediante voz o texto en lenguaje natural
+<a href="#">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=22&duration=3000&pause=800&color=00C6FF&center=true&vCenter=true&width=600&lines=Habla%20y%20tu%20ba%C3%B1o%20responde;Tengo%20sueno%2C%20abre%20la%20ducha%20-%3E%20modo%20nocturno%20%2B%20ducha;ESP32%20%2B%20MQTT%20%2B%20IA%20en%20tiempo%20real;Universidad%20Militar%20Nueva%20Granada" alt="Typing SVG" />
+</a>
 
 **Universidad Militar Nueva Granada** · Ingeniería Mecatrónica
 
@@ -13,6 +15,8 @@
 [![Groq](https://img.shields.io/badge/Groq-LLM%20%2B%20Whisper-F55036?style=for-the-badge)](https://groq.com/)
 
 </div>
+
+<img width="100%" src="https://capsule-render.vercel.app/api?type=waving&color=0:00C6FF,100:0072FF&height=100&section=footer"/>
 
 ---
 
