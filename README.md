@@ -1,27 +1,45 @@
+<div align="center">
+
 # 🛁 Sistema Baño Domótico
 
-Proyecto de la Universidad Militar Nueva Granada — Ingeniería Mecatrónica.
+### Control inteligente de un baño mediante voz o texto en lenguaje natural
 
-Sistema de control para un baño inteligente que permite manejar iluminación,
-ducha y persiana mediante **comandos de voz o texto en lenguaje natural**,
+**Universidad Militar Nueva Granada** · Ingeniería Mecatrónica
+
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![ESP32](https://img.shields.io/badge/ESP32-Firmware-E7352C?style=for-the-badge&logo=espressif&logoColor=white)](https://www.espressif.com/)
+[![MQTT](https://img.shields.io/badge/MQTT-HiveMQ-660066?style=for-the-badge&logo=eclipsemosquitto&logoColor=white)](https://broker.hivemq.com/)
+[![Flask](https://img.shields.io/badge/Flask-3.0-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Groq](https://img.shields.io/badge/Groq-LLM%20%2B%20Whisper-F55036?style=for-the-badge)](https://groq.com/)
+
+</div>
+
+---
+
+Sistema de control para un baño inteligente que permite manejar **iluminación**,
+**ducha** y **persiana** mediante comandos de voz o texto en lenguaje natural,
 usando un microcontrolador **ESP32**, el protocolo **MQTT** y un modelo de
 lenguaje (**Groq**) para interpretar lo que pide el usuario.
 
-Se puede controlar desde:
-- Una **consola de PC** (`chatbot_bano.py`)
-- El **navegador del celular**, con un dashboard táctil y botón de micrófono
-  (`app.py` + `templates/index.html`)
+<div align="center">
+
+| 🖥️ Consola | 📱 Dashboard móvil |
+|:---:|:---:|
+| `chatbot_bano.py` | `app.py` + `templates/index.html` |
+| Chat de texto en la terminal | Tarjetas táctiles + botón de micrófono |
+
+</div>
 
 ## 📑 Contenido
 
-1. [Demo y fotos del prototipo](#-demo-y-fotos-del-prototipo)
-2. [Arquitectura general](#-arquitectura-general)
-3. [Estructura del repositorio](#-estructura-del-repositorio)
-4. [Requisitos](#️-requisitos)
-5. [Cómo correrlo](#️-cómo-correrlo)
-6. [Explicación del código, bloque por bloque](#-explicación-del-código-bloque-por-bloque)
-7. [Nota de seguridad](#-nota-de-seguridad)
-8. [Autor](#-autor)
+- [🎥 Demo y fotos del prototipo](#-demo-y-fotos-del-prototipo)
+- [📐 Arquitectura general](#-arquitectura-general)
+- [📁 Estructura del repositorio](#-estructura-del-repositorio)
+- [⚙️ Requisitos](#️-requisitos)
+- [▶️ Cómo correrlo](#️-cómo-correrlo)
+- [🧩 Explicación del código, bloque por bloque](#-explicación-del-código-bloque-por-bloque)
+- [🔒 Nota de seguridad](#-nota-de-seguridad)
+- [👤 Autor](#-autor)
 
 ---
 
@@ -31,44 +49,59 @@ Antes de entrar en el código, así se ve y se comporta el prototipo físico:
 una maqueta de baño a escala con LEDs, sensor DHT11, servomotor (persiana) y
 el ESP32 controlando todo por MQTT.
 
-### Video de demostración
+### 🎬 Video de demostración
+
+<div align="center">
 
 ![Demo: la persiana se mueve al recibir un comando](assets/video/demo-persiana.gif)
 
-*El GIF de arriba es un fragmento corto y comprimido. Los videos completos,
-sin recortar, están en [`assets/video/`](assets/video/):*
+</div>
 
-- 🎬 [Demo completo — interpretación de comando y movimiento de la persiana](assets/video/demo-completo-comandos.mp4)
-- 🎬 [Detalle del servo y los sensores en funcionamiento](assets/video/detalle-persiana-sensores.mp4)
+> El GIF de arriba es un fragmento corto y comprimido. Los videos completos,
+> sin recortar, están en [`assets/video/`](assets/video/):
+>
+> - 🎬 [Demo completo — interpretación de comando y movimiento de la persiana](assets/video/demo-completo-comandos.mp4)
+> - 🎬 [Detalle del servo y los sensores en funcionamiento](assets/video/detalle-persiana-sensores.mp4)
 
-> **Nota:** GitHub solo reproduce en línea los archivos de video que se suben
-> arrastrándolos directamente en el editor web de GitHub (quedan como enlaces
-> `user-attachments`); los `.mp4` que viven dentro del repositorio se muestran
-> como enlace de descarga, no como reproductor. Por eso arriba se usa un GIF
-> (sí se reproduce solo) y los `.mp4` se dejan como enlace para ver la
-> calidad completa. Si quieres que los videos completos se vean como
-> reproductor embebido, puedes arrastrarlos una vez dentro del cuadro de
-> edición del README en github.com; GitHub los sube y genera el enlace
-> especial automáticamente.
+<details>
+<summary>ℹ️ ¿Por qué un GIF y no los <code>.mp4</code> embebidos?</summary>
+<br>
 
-### Fotos del prototipo
+GitHub solo reproduce en línea los archivos de video que se suben
+arrastrándolos directamente en el editor web de GitHub (quedan como enlaces
+`user-attachments`); los `.mp4` que viven dentro del repositorio se muestran
+como enlace de descarga, no como reproductor. Por eso arriba se usa un GIF
+(sí se reproduce solo) y los `.mp4` se dejan como enlace para ver la
+calidad completa. Si quieres que los videos completos se vean como
+reproductor embebido, puedes arrastrarlos una vez dentro del cuadro de
+edición del README en github.com; GitHub los sube y genera el enlace
+especial automáticamente.
 
-| Modo diurno | Modo sauna | Modo noche |
-|---|---|---|
+</details>
+
+### 📸 Fotos del prototipo
+
+<div align="center">
+
+| ☀️ Modo diurno | 🧖 Modo sauna | 🌙 Modo noche |
+|:---:|:---:|:---:|
 | ![Modo diurno](assets/img/maqueta-modo-diurno.jpg) | ![Modo sauna](assets/img/maqueta-modo-sauna.jpg) | ![Modo noche](assets/img/maqueta-modo-noche.jpg) |
+| Iluminación normal del baño | Luces cálidas/naranjas, ambiente sauna | Luces azules tenues, modo nocturno |
 
-- **Modo diurno:** modo de iluminación normal del baño.
-- **Modo sauna:** modo con luces cálidas/naranjas, simulando ambiente de sauna.
-- **Modo noche:** luces azules tenues encendidas, simulando modo nocturno.
+</div>
 
 En las tres fotos también se ve el sensor DHT11, el servomotor de la
 persiana y las "cortinas" de la ducha, todo conectado al ESP32.
 
-### Las dos interfaces de control
+### 🕹️ Las dos interfaces de control
 
-| Consola (`chatbot_bano.py`) | Dashboard móvil (`app.py` + `index.html`) |
-|---|---|
+<div align="center">
+
+| 🖥️ Consola (`chatbot_bano.py`) | 📱 Dashboard móvil (`app.py` + `index.html`) |
+|:---:|:---:|
 | ![Consola del chatbot](assets/img/captura-consola-chatbot.png) | ![Dashboard móvil](assets/img/captura-dashboard-movil.png) |
+
+</div>
 
 - **Consola:** cada línea que escribe el usuario se interpreta con Groq y
   se muestra la lista de comandos detectados antes de enviarlos al ESP32
@@ -81,19 +114,22 @@ persiana y las "cortinas" de la ducha, todo conectado al ESP32.
 
 ## 📐 Arquitectura general
 
+<div align="center">
+
 ![Diagrama de arquitectura: usuario, interfaces, bano_core.py, Groq, MQTT y ESP32](assets/img/diagrama-arquitectura.svg)
 
-- **→ una sola flecha:** relación de un solo sentido (ej. el ESP32 controla
-  los LEDs, pero los LEDs no le "contestan" nada).
-- **↕ flecha en ambos extremos:** canal bidireccional — el comando baja
-  (usuario → ESP32) y el estado sube (ESP32 → dashboard) por el mismo canal
-  MQTT.
+</div>
 
-**Idea clave:** toda la lógica de conexión MQTT y de interpretación de
-lenguaje natural vive en un solo archivo (`bano_core.py`) para no
-duplicarla entre la versión de consola y la versión web. Tanto
-`chatbot_bano.py` como `app.py` solo se encargan de la interfaz
-(consola o navegador) y llaman a las funciones de `bano_core.py`.
+| Símbolo | Significado |
+|---|---|
+| **→** | Relación de un solo sentido (ej. el ESP32 controla los LEDs, pero los LEDs no le "contestan" nada) |
+| **↕** | Canal bidireccional — el comando baja (usuario → ESP32) y el estado sube (ESP32 → dashboard) por el mismo canal MQTT |
+
+> 💡 **Idea clave:** toda la lógica de conexión MQTT y de interpretación de
+> lenguaje natural vive en un solo archivo (`bano_core.py`) para no
+> duplicarla entre la versión de consola y la versión web. Tanto
+> `chatbot_bano.py` como `app.py` solo se encargan de la interfaz
+> (consola o navegador) y llaman a las funciones de `bano_core.py`.
 
 ---
 
@@ -101,15 +137,15 @@ duplicarla entre la versión de consola y la versión web. Tanto
 
 ```
 Sistema-Bano-Domotico/
-├── app.py                    # Servidor Flask (control desde el celular)
-├── bano_core.py               # Lógica compartida: MQTT, Groq, Whisper
-├── chatbot_bano.py            # Chatbot de consola
-├── DuchaInteligente.ino        # Firmware del ESP32
+├── app.py                     # Servidor Flask (control desde el celular)
+├── bano_core.py                # Lógica compartida: MQTT, Groq, Whisper
+├── chatbot_bano.py             # Chatbot de consola
+├── DuchaInteligente.ino         # Firmware del ESP32
 ├── templates/
-│   └── index.html              # Interfaz móvil (HTML+CSS+JS)
+│   └── index.html               # Interfaz móvil (HTML+CSS+JS)
 ├── assets/
-│   ├── img/                    # Fotos, capturas y diagrama de arquitectura
-│   └── video/                  # GIF y videos de demostración
+│   ├── img/                     # Fotos, capturas y diagrama de arquitectura
+│   └── video/                   # GIF y videos de demostración
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -126,7 +162,7 @@ Sistema-Bano-Domotico/
 - Arduino IDE (o PlatformIO) con las librerías: `DHT sensor library`,
   `ESP32Servo`, `PubSubClient`
 
-Instalación de dependencias de Python:
+**Instalación de dependencias de Python:**
 
 ```bash
 pip install -r requirements.txt
@@ -141,8 +177,8 @@ pip install -r requirements.txt
 | **requests** | Hace las peticiones HTTP a la API de Groq: tanto para interpretar texto (chat completions) como para transcribir audio (Whisper) | `bano_core.py` | Las llamadas a Groq se hacen una a la vez y se puede esperar la respuesta bloqueando (ya hay reintentos con backoff exponencial en el propio código); no hace falta la complejidad de una librería asíncrona como `aiohttp` para este caso de uso |
 | **pyOpenSSL** | Le permite a Flask generar un certificado HTTPS autofirmado al vuelo (`ssl_context="adhoc"`) | `app.py` | Sin HTTPS, el navegador del celular no da permiso de micrófono (`getUserMedia`). pyOpenSSL es lo que Werkzeug necesita por debajo para crear ese certificado en memoria, sin tener que generar manualmente archivos `.pem` con `openssl` desde la terminal |
 
-`requirements.txt` ya trae estos mismos comentarios junto a cada versión,
-por si prefieres leerlos directamente ahí en vez de en esta tabla:
+<details>
+<summary>Ver <code>requirements.txt</code> comentado</summary>
 
 ```txt
 flask>=3.0          # servidor web + rutas /api/... (app.py)
@@ -150,6 +186,8 @@ paho-mqtt>=2.1       # cliente MQTT: conecta al broker y publica/recibe comandos
 requests>=2.31       # llamadas HTTP a la API de Groq: texto y transcripción de voz (bano_core.py)
 pyopenssl>=24.0      # certificado HTTPS autofirmado para poder usar el micrófono del celular (app.py)
 ```
+
+</details>
 
 ### 🔩 Hardware y librerías de Arduino (firmware del ESP32)
 
@@ -171,14 +209,16 @@ pyopenssl>=24.0      # certificado HTTPS autofirmado para poder usar el micrófo
 | `DHT sensor library` (Adafruit) | Lee la temperatura y humedad del sensor DHT11 | Abstrae el protocolo de un solo cable (single-wire) del DHT11, que si se implementara a mano requeriría manejar manualmente timings de microsegundos para leer cada bit |
 | `ESP32Servo` | Controla servomotores desde el ESP32 usando PWM por hardware (periférico LEDC) | La librería `Servo.h` estándar de Arduino no es compatible con el ESP32 (usa un manejo de PWM distinto al de un AVR normal); `ESP32Servo` sí está adaptada específicamente a su hardware |
 
-Definir la API key de Groq como variable de entorno antes de correr
+**Definir la API key de Groq como variable de entorno** antes de correr
 cualquiera de los dos programas:
 
-```bash
+```powershell
 # PowerShell
 $env:GROQ_API_KEY = "tu_api_key_aqui"
+```
 
-# CMD
+```cmd
+:: CMD
 set GROQ_API_KEY=tu_api_key_aqui
 ```
 
@@ -195,15 +235,16 @@ python chatbot_bano.py
 ```bash
 python app.py
 ```
-Te dará una URL tipo `https://<IP-de-tu-PC>:5000` para abrir desde el
-navegador del celular. El certificado será autofirmado (aparece una
-advertencia, es normal — es tu propio servidor).
+
+> Te dará una URL tipo `https://<IP-de-tu-PC>:5000` para abrir desde el
+> navegador del celular. El certificado será autofirmado (aparece una
+> advertencia, es normal — es tu propio servidor).
 
 ---
 
 ## 🧩 Explicación del código, bloque por bloque
 
-### 1. `bano_core.py` — el cerebro compartido
+### 1️⃣ `bano_core.py` — el cerebro compartido
 
 **Configuración MQTT**
 ```python
@@ -275,9 +316,7 @@ Envía el audio grabado (desde el navegador o el micrófono) a la API de
 Whisper de Groq, y devuelve el texto transcrito en español, que luego se
 vuelve a pasar por `interpretar_mensaje()`.
 
----
-
-### 2. `chatbot_bano.py` — interfaz de consola
+### 2️⃣ `chatbot_bano.py` — interfaz de consola
 
 ```python
 core.conectar_mqtt()
@@ -291,9 +330,7 @@ Es un loop simple: lee lo que el usuario escribe, lo pasa a
 envía al ESP32. Escribiendo `"salir"` termina el programa y cierra la
 conexión MQTT de forma ordenada.
 
----
-
-### 3. `app.py` — servidor web (Flask)
+### 3️⃣ `app.py` — servidor web (Flask)
 
 **Detección de IP local**
 ```python
@@ -309,23 +346,21 @@ operativo elija la interfaz de red correcta, y lee la IP desde ahí.
 
 | Ruta | Método | Qué hace |
 |---|---|---|
-| `/` | GET | Sirve `templates/index.html` |
-| `/api/comando` | POST | Recibe texto, lo interpreta con Groq y envía comandos al ESP32 |
-| `/api/comando-voz` | POST | Recibe un archivo de audio, lo transcribe y luego hace lo mismo que `/api/comando` |
-| `/api/estado` | GET | Devuelve el último estado conocido del baño (para el dashboard) |
-| `/api/refrescar` | POST | Le pide directamente al ESP32 que reporte estado (sin pasar por Groq) |
+| `/` | `GET` | Sirve `templates/index.html` |
+| `/api/comando` | `POST` | Recibe texto, lo interpreta con Groq y envía comandos al ESP32 |
+| `/api/comando-voz` | `POST` | Recibe un archivo de audio, lo transcribe y luego hace lo mismo que `/api/comando` |
+| `/api/estado` | `GET` | Devuelve el último estado conocido del baño (para el dashboard) |
+| `/api/refrescar` | `POST` | Le pide directamente al ESP32 que reporte estado (sin pasar por Groq) |
 
 ```python
 app.run(host="0.0.0.0", port=5000, ssl_context="adhoc", debug=False)
 ```
 Corre con HTTPS autofirmado (`ssl_context="adhoc"`) porque los
-navegadores solo permiten acceso al micrófono en páginas seguras. `host="0.0.0.0"`
-hace que el servidor sea visible desde otros dispositivos de la red (el celular),
-no solo desde el propio PC.
+navegadores solo permiten acceso al micrófono en páginas seguras.
+`host="0.0.0.0"` hace que el servidor sea visible desde otros dispositivos
+de la red (el celular), no solo desde el propio PC.
 
----
-
-### 4. `templates/index.html` — interfaz móvil
+### 4️⃣ `templates/index.html` — interfaz móvil
 
 **Dashboard visual:** tarjetas para los 3 modos de luz (mutuamente
 excluyentes), toggles de ducha/persiana, y tarjetas de sensores
@@ -371,9 +406,7 @@ El dashboard consulta `/api/estado` cada 5 segundos, y cada 20 segundos le
 pide al ESP32 (vía `/api/refrescar`) que reporte temperatura y humedad
 actualizadas.
 
----
-
-### 5. `DuchaInteligente.ino` — firmware del ESP32
+### 5️⃣ `DuchaInteligente.ino` — firmware del ESP32
 
 **Conexión WiFi con reconexión no bloqueante**
 ```cpp
@@ -441,15 +474,20 @@ con otros dispositivos conectados al mismo broker público.
 
 ## 🔒 Nota de seguridad
 
-`broker.hivemq.com` es un broker MQTT **público y sin autenticación**.
-Cualquiera que conozca el prefijo de topic (`unimilitar_duchainteligente_hearvl2026`)
-podría enviar comandos al sistema. Para un proyecto académico de
-demostración esto es aceptable, pero para un uso real se recomendaría un
-broker privado con usuario/contraseña o TLS.
+> ⚠️ `broker.hivemq.com` es un broker MQTT **público y sin autenticación**.
+> Cualquiera que conozca el prefijo de topic
+> (`unimilitar_duchainteligente_hearvl2026`) podría enviar comandos al
+> sistema. Para un proyecto académico de demostración esto es aceptable,
+> pero para un uso real se recomendaría un broker privado con
+> usuario/contraseña o TLS.
 
 ---
 
 ## 👤 Autor
 
-Proyecto desarrollado por Julián — Ingeniería Mecatrónica, Universidad
-Militar Nueva Granada.
+<div align="center">
+
+Proyecto desarrollado por **Julián** — Ingeniería Mecatrónica,
+Universidad Militar Nueva Granada.
+
+</div>
