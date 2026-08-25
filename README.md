@@ -42,14 +42,16 @@ sin recortar, están en [`assets/video/`](assets/video/):*
 
 ### Fotos del prototipo
 
-| Modo diurno | Modo nocturno | Detalle de hardware |
+| Modo diurno | Modo sauna | Modo noche |
 |---|---|---|
-| ![Modo diurno](assets/img/maqueta-modo-diurno.jpg) | ![Modo nocturno](assets/img/maqueta-modo-nocturno.jpg) | ![Detalle de hardware](assets/img/maqueta-detalle-hardware.jpg) |
+| ![Modo diurno](assets/img/maqueta-modo-diurno.jpg) | ![Modo sauna](assets/img/maqueta-modo-sauna.jpg) | ![Modo noche](assets/img/maqueta-modo-noche.jpg) |
 
-- **Modo diurno:** luces cálidas/blancas encendidas, simulando iluminación de día.
-- **Modo nocturno:** luces azules tenues encendidas, simulando modo noche.
-- **Detalle de hardware:** sensor DHT11, servomotor de la persiana y las
-  "cortinas" de la ducha, todo conectado al ESP32.
+- **Modo diurno:** modo de iluminación normal del baño.
+- **Modo sauna:** modo con luces cálidas/naranjas, simulando ambiente de sauna.
+- **Modo noche:** luces azules tenues encendidas, simulando modo nocturno.
+
+En las tres fotos también se ve el sensor DHT11, el servomotor de la
+persiana y las "cortinas" de la ducha, todo conectado al ESP32.
 
 ---
 
